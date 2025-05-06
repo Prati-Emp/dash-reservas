@@ -127,9 +127,11 @@ for idx, row in df_fora_prazo.iterrows():
                         padding: 1.2rem;
                         border-radius: 8px;
                         background-color: #f8f9fa;
-                        margin-bottom: 1.2rem;
+                        margin-bottom: 0.5rem;
                         box-shadow: 0 2px 6px rgba(0,0,0,0.1);
                         border: 1px solid #e9ecef;
+                        height: 320px;
+                        overflow: hidden;
                     }
                     .card-title {
                         color: #495057;
@@ -140,30 +142,165 @@ for idx, row in df_fora_prazo.iterrows():
                     .card-content {
                         color: #495057;
                     }
+                    .card-field {
+                        margin-bottom: 0.5rem;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
                     .card-label {
                         color: #6c757d;
                         font-weight: 600;
+                        display: inline-block;
+                        min-width: 120px;
                     }
                     .card-value {
                         color: #212529;
+                        display: inline-block;
+                        max-width: calc(100% - 130px);
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        vertical-align: bottom;
                     }
                 </style>
                 """, unsafe_allow_html=True)
             
-            with st.container():
-                st.markdown(f"""
-                    <div class="card">
-                        <div class="card-title">Reserva #{row['idreserva']}</div>
-                        <div class="card-content">
-                            <p><span class="card-label">Cliente:</span> <span class="card-value">{row['cliente']}</span></p>
-                            <p><span class="card-label">Empreendimento:</span> <span class="card-value">{row['empreendimento']}</span></p>
-                            <p><span class="card-label">Situação:</span> <span class="card-value">{row['situacao']}</span></p>
-                            <p><span class="card-label">Dias na Situação:</span> <span class="card-value">{row['dias_na_situacao']}</span></p>
-                            <p><span class="card-label">Valor:</span> <span class="card-value">R$ {row['valor_contrato']:,.2f}</span></p>
-                            <p><span class="card-label">Imobiliária:</span> <span class="card-value">{row['imobiliaria']}</span></p>
+            # Criar um ID único para o botão do modal
+            modal_id = f"modal_{row['idreserva']}"
+            
+            # Exibir o card normal
+            st.markdown(f"""
+                <div class="card">
+                    <div class="card-title">Reserva #{row['idreserva']}</div>
+                    <div class="card-content">
+                        <div class="card-field">
+                            <span class="card-label">Cliente:</span>
+                            <span class="card-value">{row['cliente']}</span>
+                        </div>
+                        <div class="card-field">
+                            <span class="card-label">Empreendimento:</span>
+                            <span class="card-value">{row['empreendimento']}</span>
+                        </div>
+                        <div class="card-field">
+                            <span class="card-label">Situação:</span>
+                            <span class="card-value">{row['situacao']}</span>
+                        </div>
+                        <div class="card-field">
+                            <span class="card-label">Dias na Situação:</span>
+                            <span class="card-value">{row['dias_na_situacao']}</span>
+                        </div>
+                        <div class="card-field">
+                            <span class="card-label">Valor:</span>
+                            <span class="card-value">R$ {row['valor_contrato']:,.2f}</span>
+                        </div>
+                        <div class="card-field">
+                            <span class="card-label">Imobiliária:</span>
+                            <span class="card-value">{row['imobiliaria']}</span>
                         </div>
                     </div>
+                </div>
                 """, unsafe_allow_html=True)
+            
+            # Botão que abre o modal abaixo do card
+            if st.button("Ver Detalhes", key=f"btn_{row['idreserva']}", use_container_width=True):
+                st.session_state[modal_id] = True
+
+            # Modal com informações detalhadas
+            if modal_id in st.session_state and st.session_state[modal_id]:
+                details_container = st.container()
+                with details_container:
+                    st.markdown("""
+                        <style>
+                            .detail-overlay {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                bottom: 0;
+                                background-color: rgba(0, 0, 0, 0.5);
+                                z-index: 1000;
+                            }
+                            .detail-container {
+                                background-color: white;
+                                padding: 2rem;
+                                border-radius: 10px;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                                margin: 2rem auto;
+                                max-width: 800px;
+                            }
+                            .detail-header {
+                                font-size: 1.5rem;
+                                font-weight: 600;
+                                margin-bottom: 1.5rem;
+                                color: #1f2937;
+                            }
+                            .detail-section {
+                                margin-bottom: 1rem;
+                                padding-bottom: 1rem;
+                                border-bottom: 1px solid #e5e7eb;
+                            }
+                            .detail-label {
+                                font-size: 0.875rem;
+                                color: #6b7280;
+                                font-weight: 600;
+                                margin-bottom: 0.25rem;
+                            }
+                            .detail-value {
+                                font-size: 1rem;
+                                color: #111827;
+                            }
+                        </style>
+                        <div class="detail-overlay">
+                            <div class="detail-container">
+                                <div class="detail-header">Detalhes da Reserva #{}</div>
+                    """.format(row['idreserva']), unsafe_allow_html=True)
+
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("""
+                            <div class="detail-section">
+                                <div class="detail-label">ID da Reserva</div>
+                                <div class="detail-value">{}</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">Cliente</div>
+                                <div class="detail-value">{}</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">Empreendimento</div>
+                                <div class="detail-value">{}</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">Situação</div>
+                                <div class="detail-value">{}</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">Dias na Situação</div>
+                                <div class="detail-section">
+                                    <div class="detail-label">Imobiliária</div>
+                                    <div class="detail-value">{}</div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-label">Data de Cadastro</div>
+                                    <div class="detail-value">{}</div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-label">Última Alteração</div>
+                                    <div class="detail-value">{}</div>
+                                </div>
+                            </div>
+                        """.format(
+                            row['valor_contrato'],
+                            row['imobiliaria'],
+                            row['data_cad'].strftime('%d/%m/%Y'),
+                            row['data_ultima_alteracao_situacao'].strftime('%d/%m/%Y')
+                        ), unsafe_allow_html=True)
+
+                    if st.button("Fechar", key=f"close_{row['idreserva']}"):
+                        st.session_state[modal_id] = False
+                        st.rerun()
 
 # Gráfico de distribuição
 st.subheader("Distribuição por Dias na Situação")
