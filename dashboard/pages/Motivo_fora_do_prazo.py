@@ -48,6 +48,20 @@ reservas_df = load_data()
 # Sidebar para filtros
 st.sidebar.header("Filtros")
 
+# Filtro de data
+data_inicio = st.sidebar.date_input(
+    "Data Inicial",
+    value=pd.Timestamp('2025-04-01'),  # Data padrão definida para 01/04/2025
+    min_value=min(reservas_df['data_cad'].dt.date),
+    max_value=max(reservas_df['data_cad'].dt.date)
+)
+data_fim = st.sidebar.date_input(
+    "Data Final",
+    value=max(reservas_df['data_cad'].dt.date),
+    min_value=min(reservas_df['data_cad'].dt.date),
+    max_value=max(reservas_df['data_cad'].dt.date)
+)
+
 # Filtro de empreendimento
 empreendimentos = sorted(reservas_df['empreendimento'].unique())
 empreendimento_selecionado = st.sidebar.selectbox("Empreendimento", ["Todos"] + list(empreendimentos))
@@ -57,7 +71,9 @@ situacoes = sorted(reservas_df['situacao'].unique())
 situacao_selecionada = st.sidebar.selectbox("Situação", ["Todas"] + list(situacoes))
 
 # Aplicar filtros
-df_filtrado = reservas_df.copy()
+mask = (reservas_df['data_cad'].dt.date >= data_inicio) & (reservas_df['data_cad'].dt.date <= data_fim)
+df_filtrado = reservas_df[mask].copy()
+
 if empreendimento_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado['empreendimento'] == empreendimento_selecionado]
 if situacao_selecionada != "Todas":
@@ -96,13 +112,58 @@ analise_situacao['Valor Total'] = analise_situacao['Valor Total'].map('R$ {:,.2f
 
 st.table(analise_situacao)
 
-# Lista detalhada de reservas fora do prazo
-st.subheader("Lista de Reservas Fora do Prazo")
+# Lista detalhada de reservas fora do prazo em formato de cards
+st.subheader("Cards de Reservas Fora do Prazo")
 df_fora_prazo = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']]
-colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao', 
-                  'dias_na_situacao', 'valor_contrato', 'imobiliaria']
 
-st.dataframe(df_fora_prazo[colunas_exibir], use_container_width=True)
+# Criar colunas para os cards (3 cards por linha)
+cols = st.columns(3)
+for idx, row in df_fora_prazo.iterrows():
+    with cols[idx % 3]:
+        with st.container():
+            st.markdown("""
+                <style>
+                    .card {
+                        padding: 1.2rem;
+                        border-radius: 8px;
+                        background-color: #f8f9fa;
+                        margin-bottom: 1.2rem;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                        border: 1px solid #e9ecef;
+                    }
+                    .card-title {
+                        color: #495057;
+                        font-size: 1.25rem;
+                        margin-bottom: 1rem;
+                        font-weight: 600;
+                    }
+                    .card-content {
+                        color: #495057;
+                    }
+                    .card-label {
+                        color: #6c757d;
+                        font-weight: 600;
+                    }
+                    .card-value {
+                        color: #212529;
+                    }
+                </style>
+                """, unsafe_allow_html=True)
+            
+            with st.container():
+                st.markdown(f"""
+                    <div class="card">
+                        <div class="card-title">Reserva #{row['idreserva']}</div>
+                        <div class="card-content">
+                            <p><span class="card-label">Cliente:</span> <span class="card-value">{row['cliente']}</span></p>
+                            <p><span class="card-label">Empreendimento:</span> <span class="card-value">{row['empreendimento']}</span></p>
+                            <p><span class="card-label">Situação:</span> <span class="card-value">{row['situacao']}</span></p>
+                            <p><span class="card-label">Dias na Situação:</span> <span class="card-value">{row['dias_na_situacao']}</span></p>
+                            <p><span class="card-label">Valor:</span> <span class="card-value">R$ {row['valor_contrato']:,.2f}</span></p>
+                            <p><span class="card-label">Imobiliária:</span> <span class="card-value">{row['imobiliaria']}</span></p>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
 
 # Gráfico de distribuição
 st.subheader("Distribuição por Dias na Situação")
