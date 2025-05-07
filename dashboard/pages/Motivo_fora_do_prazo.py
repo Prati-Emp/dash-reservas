@@ -118,21 +118,32 @@ st.subheader("Cards de Reservas Fora do Prazo")
 df_fora_prazo = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']]
 
 # Criar colunas para os cards (3 cards por linha)
-cols = st.columns(3)
-for idx, row in df_fora_prazo.iterrows():
-    with cols[idx % 3]:
-        with st.container():
-            st.markdown(f"""
-                <div style="padding: 1rem; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 1rem; background-color: white; color: black;">
-                    <h4 style="color: black;">Reserva #{int(row['idreserva'])} - {row['valor_contrato']:,.2f}</h4>
-                    <p style="color: black;"><strong style="color: black;">Cliente:</strong> {row['cliente']}</p>
-                    <p style="color: black;"><strong style="color: black;">Empreendimento:</strong> {row['empreendimento']}</p>
-                    <p style="color: black;"><strong style="color: black;">Situação:</strong> {row['situacao']}</p>
-                    <p style="color: black;"><strong style="color: black;">Dias na Situação:</strong> {row['dias_na_situacao']}</p>
-                    <p style="color: black;"><strong style="color: black;">Valor:</strong> R$ {row['valor_contrato']:,.2f}</p>
-                    <p style="color: black;"><strong style="color: black;">Imobiliária:</strong> {row['imobiliaria']}</p>
-                </div>
-            """, unsafe_allow_html=True)
+for i in range(0, len(df_fora_prazo), 3):
+    cols = st.columns([1, 1, 1])  # Equal width columns
+    for j in range(3):
+        if i + j < len(df_fora_prazo):
+            row = df_fora_prazo.iloc[i + j]
+            with cols[j]:
+                st.markdown(f"""
+                    <div style="
+                        padding: 1.2rem;
+                        border-radius: 10px;
+                        border: 1px solid #e5e7eb;
+                        margin: 0.5rem 0;
+                        background-color: white;
+                        color: black;
+                        height: 100%;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+                    ">
+                        <h4 style="color: #000000; margin-top: 0; margin-bottom: 1rem; font-weight: 600;">Reserva #{int(row['idreserva'])}</h4>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Cliente:</strong> {row['cliente']}</p>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Empreendimento:</strong> {row['empreendimento']}</p>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Situação:</strong> {row['situacao']}</p>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Dias na Situação:</strong> {row['dias_na_situacao']}</p>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Valor:</strong> R$ {row['valor_contrato']:,.2f}</p>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Imobiliária:</strong> {row['imobiliaria']}</p>
+                    </div>
+                """, unsafe_allow_html=True)
 
 # Gráfico de distribuição
 st.subheader("Distribuição por Dias na Situação")
