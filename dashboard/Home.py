@@ -35,8 +35,9 @@ def check_time_limit(row):
 # Carregando os dados
 @st.cache_data
 def load_data():
-    reservas_df = pd.read_csv('reservas_abril.csv')
-    workflow_df = pd.read_csv('workflow_abril.csv')
+    csv_path = r'C:\Users\Djonathan__Souza\OneDrive - Prati Empreendimentos ltda\backup\Desenvolvimento\double_try'
+    reservas_df = pd.read_csv(f'{csv_path}/reservas_abril.csv')
+    workflow_df = pd.read_csv(f'{csv_path}/workflow_abril.csv')
     
     # Converter colunas de data
     reservas_df['data_cad'] = pd.to_datetime(reservas_df['data_cad'])
