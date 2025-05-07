@@ -6,6 +6,47 @@ import re
 # Configuração da página
 st.set_page_config(page_title="Relatório de Reservas", layout="wide")
 
+def hide_sidebar():
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] {
+            display: none;
+        }
+        .stTextInput > div > div > input {
+            width: 300px;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Função para verificar senha
+def check_password():
+    """Returns `True` if the user had the correct password."""
+    
+    if "password_correct" not in st.session_state:
+        # First run, hide sidebar and show password input
+        hide_sidebar()
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            password = st.text_input(
+                "Por favor, digite a senha para acessar o dashboard:",
+                type="password",
+                key="password"
+            )
+            if st.button("Entrar"):
+                if password == "prati2025":
+                    st.session_state["password_correct"] = True
+                    st.rerun()  # Rerun to show sidebar
+                else:
+                    st.error("😕 Senha incorreta")
+        return False
+    
+    return st.session_state.get("password_correct", False)
+
+# Verifica a senha antes de mostrar qualquer conteúdo
+if not check_password():
+    st.stop()  # Não mostra nada além deste ponto se a senha estiver errada
+
+# Se chegou aqui, a senha está correta
 # Título do aplicativo
 st.title("📊 Relatório de Reservas")
 
@@ -134,7 +175,7 @@ def highlight_fora_prazo(s):
 
 # Preparar e exibir o DataFrame com estilo
 colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao', 
-                  'tempo_na_situacao', 'valor_contrato', 'imobiliaria']
+                'tempo_na_situacao', 'valor_contrato', 'imobiliaria']
 
 st.dataframe(
     df_sem_canceladas_vendidas[colunas_exibir].style.apply(highlight_fora_prazo, axis=0),
