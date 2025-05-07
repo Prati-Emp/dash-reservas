@@ -124,7 +124,7 @@ for idx, row in df_fora_prazo.iterrows():
         with st.container():
             st.markdown(f"""
                 <div style="padding: 1rem; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 1rem; background-color: white; color: black;">
-                    <h4 style="color: black;">Reserva #{int(row['idreserva'])}</h4>
+                    <h4 style="color: black;">Reserva #{int(row['idreserva'])} - {row['valor_contrato']:,.2f}</h4>
                     <p style="color: black;"><strong style="color: black;">Cliente:</strong> {row['cliente']}</p>
                     <p style="color: black;"><strong style="color: black;">Empreendimento:</strong> {row['empreendimento']}</p>
                     <p style="color: black;"><strong style="color: black;">Situação:</strong> {row['situacao']}</p>
