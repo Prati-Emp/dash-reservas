@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import re
+import requests
 
 # Configuração da página
 st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
@@ -113,6 +114,25 @@ analise_situacao['Valor Total'] = analise_situacao['Valor Total'].map('R$ {:,.2f
 
 st.table(analise_situacao)
 
+@st.cache_data
+def get_reservation_messages(idreserva):
+    """Busca as mensagens de uma reserva específica"""
+    url = f"https://prati.cvcrm.com.br/api/v2/cv/reservas/{idreserva}/mensagens"
+    headers = {
+        "accept": "application/json",
+        "email": "djonathan.souza@grupoprati.com",
+        "token": "394f594bc6192c86d94f329355ae13ca0b78a2a9",
+    }
+    
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        messages = response.json().get("dados", [])
+        return messages
+    except Exception as e:
+        st.error(f"Erro ao buscar mensagens da reserva {idreserva}: {str(e)}")
+        return []
+
 # Lista detalhada de reservas fora do prazo em formato de cards
 st.subheader("Cards de Reservas Fora do Prazo")
 df_fora_prazo = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']]
@@ -123,6 +143,8 @@ for i in range(0, len(df_fora_prazo), 3):
     for j in range(3):
         if i + j < len(df_fora_prazo):
             row = df_fora_prazo.iloc[i + j]
+            messages = get_reservation_messages(int(row['idreserva']))
+            
             with cols[j]:
                 st.markdown(f"""
                     <div style="
@@ -144,6 +166,26 @@ for i in range(0, len(df_fora_prazo), 3):
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Imobiliária:</strong> {row['imobiliaria']}</p>
                     </div>
                 """, unsafe_allow_html=True)
+                
+                if messages:
+                    with st.expander("Ver Mensagens"):
+                        for msg in messages:
+                            st.markdown(f"""
+                                <div style="
+                                    padding: 0.8rem;
+                                    border-radius: 8px;
+                                    border: 1px solid #e5e7eb;
+                                    margin: 0.5rem 0;
+                                    background-color: #f9fafb;
+                                ">
+                                    <p style="color: #000000; margin: 0.2rem 0;"><strong>Data:</strong> {msg.get('data_criacao', 'N/A')}</p>
+                                    <p style="color: #000000; margin: 0.2rem 0;"><strong>Usuário:</strong> {msg.get('usuario_nome', 'N/A')}</p>
+                                    <p style="color: #000000; margin: 0.2rem 0;"><strong>Mensagem:</strong> {msg.get('mensagem', 'N/A')}</p>
+                                </div>
+                            """, unsafe_allow_html=True)
+                else:
+                    with st.expander("Ver Mensagens"):
+                        st.info("Não há mensagens para esta reserva.")
 
 # Gráfico de distribuição
 st.subheader("Distribuição por Dias na Situação")
