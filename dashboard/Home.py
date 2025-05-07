@@ -125,9 +125,21 @@ st.subheader("Lista de Reservas")
 # Calcular o tempo na situação atual
 df_sem_canceladas_vendidas['tempo_na_situacao'] = (datetime.now() - pd.to_datetime(df_sem_canceladas_vendidas['data_ultima_alteracao_situacao'])).dt.days
 
+# Verificar quais reservas estão fora do prazo
+df_sem_canceladas_vendidas['fora_do_prazo'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
+
+# Função para estilizar o DataFrame
+def highlight_fora_prazo(s):
+    return ['color: red' if df_sem_canceladas_vendidas['fora_do_prazo'].iloc[i] else '' for i in range(len(s))]
+
+# Preparar e exibir o DataFrame com estilo
 colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao', 
                   'tempo_na_situacao', 'valor_contrato', 'imobiliaria']
-st.dataframe(df_sem_canceladas_vendidas[colunas_exibir], use_container_width=True)
+
+st.dataframe(
+    df_sem_canceladas_vendidas[colunas_exibir].style.apply(highlight_fora_prazo, axis=0),
+    use_container_width=True
+)
 
 # Análise de workflow
 if st.checkbox("Mostrar Análise de Workflow"):
