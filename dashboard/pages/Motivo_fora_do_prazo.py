@@ -187,8 +187,3 @@ for i in range(0, len(df_fora_prazo), 3):
                 else:
                     with st.expander("Ver Mensagens"):
                         st.info("Não há mensagens para esta reserva.")
-
-# Gráfico de distribuição
-st.subheader("Distribuição por Dias na Situação")
-fig_data = df_fora_prazo.groupby('situacao')['dias_na_situacao'].mean().reset_index()
-st.bar_chart(data=fig_data, x='situacao', y='dias_na_situacao')
