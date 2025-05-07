@@ -177,10 +177,11 @@ for i in range(0, len(df_fora_prazo), 3):
                                     border: 1px solid #e5e7eb;
                                     margin: 0.5rem 0;
                                     background-color: #f9fafb;
+                                    color: #000000;
                                 ">
-                                    <p style="color: #000000; margin: 0.2rem 0;"><strong>Data:</strong> {msg.get('data_criacao', 'N/A')}</p>
-                                    <p style="color: #000000; margin: 0.2rem 0;"><strong>Usuário:</strong> {msg.get('usuario_nome', 'N/A')}</p>
-                                    <p style="color: #000000; margin: 0.2rem 0;"><strong>Mensagem:</strong> {msg.get('mensagem', 'N/A')}</p>
+                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Data:</strong> <span style="color: #000000;">{msg.get('dataCad', 'N/A')}</span></p>
+                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Usuário:</strong> <span style="color: #000000;">{msg.get('usuario_nome', 'N/A')}</span></p>
+                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Mensagem:</strong> <span style="color: #000000;">{msg.get('mensagem', 'N/A')}</span></p>
                                 </div>
                             """, unsafe_allow_html=True)
                 else:
