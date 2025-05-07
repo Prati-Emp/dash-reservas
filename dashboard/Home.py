@@ -13,7 +13,27 @@ def hide_sidebar():
             display: none;
         }
         .stTextInput > div > div > input {
-            width: 300px;
+            width: 200px !important;
+        }
+        .small-font {
+            font-size: 14px !important;
+            font-weight: normal !important;
+            text-align: center !important;
+        }
+        div[data-testid="stImage"] {
+            display: flex;
+            justify-content: center;
+        }
+        div.stButton > button {
+            width: 200px;
+            margin: 0 auto;
+            display: block;
+        }
+        div[data-testid="column"] {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -25,17 +45,27 @@ def check_password():
     if "password_correct" not in st.session_state:
         # First run, hide sidebar and show password input
         hide_sidebar()
-        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
+            # Logo centralizada usando arquivo local
+            st.image("logo.png", width=400)
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Campo de senha com label menor e centralizado
+            st.markdown('<p class="small-font">Por favor, digite a senha para acessar o dashboard:</p>', unsafe_allow_html=True)
             password = st.text_input(
-                "Por favor, digite a senha para acessar o dashboard:",
+                "",
                 type="password",
-                key="password"
+                key="password",
+                label_visibility="collapsed"
             )
+            
+            # Botão de entrar
             if st.button("Entrar"):
                 if password == "prati2025":
                     st.session_state["password_correct"] = True
-                    st.rerun()  # Rerun to show sidebar
+                    st.rerun()
                 else:
                     st.error("😕 Senha incorreta")
         return False
