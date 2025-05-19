@@ -5,6 +5,11 @@ import re
 import requests
 import locale
 import duckdb
+from dotenv import load_dotenv
+import os
+
+# Carregar variáveis de ambiente
+load_dotenv()
 
 # Set locale to Brazilian Portuguese
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -20,7 +25,9 @@ def format_currency(value):
 @st.cache_resource
 def get_motherduck_connection():
     """Create a cached connection to MotherDuck"""
-    token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRqb25hdGhhbjgwMTZAZ21haWwuY29tIiwic2Vzc2lvbiI6ImRqb25hdGhhbjgwMTYuZ21haWwuY29tIiwicGF0IjoiWWdJbjE5cUJCTUZQUXlLSFJrWUNXa0dQTHJ3MEFoUFZHLXo5NXo1d0hoNCIsInVzZXJJZCI6IjdkNTI0ZDBlLTU4NjAtNDQ2Yy04OTMxLTJkZmZlMzZlMDlkNSIsImlzcyI6Im1kX3BhdCIsInJlYWRPbmx5IjpmYWxzZSwidG9rZW5UeXBlIjoicmVhZF93cml0ZSIsImlhdCI6MTc0NzY4MTU0MH0.iQ91Md6R7MacKt2qT8qQS9F63S4JHbPtGx2KoUcyjjo'
+    token = os.getenv('MOTHERDUCK_TOKEN')
+    if not token:
+        raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
     return duckdb.connect('md:reservas?motherduck_token=' + token)
 
 # Configuração da página
