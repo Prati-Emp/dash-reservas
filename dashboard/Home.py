@@ -1,4 +1,10 @@
 import streamlit as st
+import os
+
+# Função para obter o caminho absoluto da logo
+def get_logo_path():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(current_dir, "logo.png")
 
 # Configuração da página
 st.set_page_config(page_title="Relatório de Reservas", layout="wide")
@@ -9,7 +15,6 @@ import re
 import locale
 import duckdb
 from dotenv import load_dotenv
-import os
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -76,7 +81,7 @@ def check_password():
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
             # Logo centralizada usando arquivo local
-            st.image("logo.png", width=400)
+            st.image(get_logo_path(), width=400)
             st.markdown("<br>", unsafe_allow_html=True)
             
             # Campo de senha com label menor e centralizado
