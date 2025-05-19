@@ -18,15 +18,13 @@ jobs:
         python-version: '3.10'
     
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        
+      run: pip install pandas duckdb requests
+
     - name: Update database
       env:
         MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
         CVCRM_EMAIL: ${{ secrets.CVCRM_EMAIL }}
         CVCRM_TOKEN: ${{ secrets.CVCRM_TOKEN }}
       run: |
-        cd streamlit
+        python reservas.py
         python update_motherduck.py
