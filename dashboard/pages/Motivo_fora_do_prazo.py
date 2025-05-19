@@ -12,7 +12,16 @@ import os
 load_dotenv()
 
 # Set locale to Brazilian Portuguese
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+try:
+    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
+    except locale.Error:
+        try:
+            locale.setlocale(locale.LC_ALL, 'pt_BR')
+        except locale.Error:
+            st.warning('Não foi possível configurar o locale para português do Brasil. Alguns formatos podem aparecer em inglês.')
 
 def format_currency(value):
     """Format currency value to Brazilian Real format"""
