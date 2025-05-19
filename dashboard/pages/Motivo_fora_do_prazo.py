@@ -1,4 +1,8 @@
 import streamlit as st
+
+# Configuração da página
+st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
+
 import pandas as pd
 from datetime import datetime
 import re
@@ -38,9 +42,6 @@ def get_motherduck_connection():
     if not token:
         raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
     return duckdb.connect('md:reservas?motherduck_token=' + token)
-
-# Configuração da página
-st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
 
 # Título do aplicativo
 st.title("📅 Análise de Reservas Fora do Prazo")

@@ -1,4 +1,8 @@
 import streamlit as st
+
+# Configuração da página
+st.set_page_config(page_title="Relatório de Reservas", layout="wide")
+
 import pandas as pd
 from datetime import datetime
 import re
@@ -28,9 +32,6 @@ def format_currency(value):
         return f"R$ {value:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except:
         return f"R$ {value}"
-
-# Configuração da página
-st.set_page_config(page_title="Relatório de Reservas", layout="wide")
 
 def hide_sidebar():
     st.markdown("""
