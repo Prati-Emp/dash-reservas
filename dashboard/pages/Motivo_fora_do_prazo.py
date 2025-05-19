@@ -3,6 +3,17 @@ import pandas as pd
 from datetime import datetime
 import re
 import requests
+import locale
+
+# Set locale to Brazilian Portuguese
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+
+def format_currency(value):
+    """Format currency value to Brazilian Real format"""
+    try:
+        return f"R$ {value:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return f"R$ {value}"
 
 # Configuração da página
 st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
@@ -98,7 +109,7 @@ with col2:
     st.metric(label="Percentual Fora do Prazo", value=f"{percentual_fora_prazo:.1f}%")
 with col3:
     valor_total_fora_prazo = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']]['valor_contrato'].sum()
-    st.metric(label="Valor Total Fora do Prazo", value=f"R$ {valor_total_fora_prazo:,.2f}")
+    st.metric(label="Valor Total Fora do Prazo", value=format_currency(valor_total_fora_prazo))
 
 # Análise por situação
 st.subheader("Análise por Situação")
@@ -110,7 +121,7 @@ analise_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_d
 
 analise_situacao.columns = ['Situação', 'Quantidade', 'Média de Dias', 'Valor Total']
 analise_situacao['Média de Dias'] = analise_situacao['Média de Dias'].round(1)
-analise_situacao['Valor Total'] = analise_situacao['Valor Total'].map('R$ {:,.2f}'.format)
+analise_situacao['Valor Total'] = analise_situacao['Valor Total'].apply(format_currency)
 
 st.table(analise_situacao)
 
@@ -162,7 +173,7 @@ for i in range(0, len(df_fora_prazo), 3):
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Empreendimento:</strong> {row['empreendimento']}</p>
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Situação:</strong> {row['situacao']}</p>
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Dias na Situação:</strong> {row['dias_na_situacao']}</p>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Valor:</strong> R$ {row['valor_contrato']:,.2f}</p>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Valor:</strong> {format_currency(row['valor_contrato'])}</p>
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Imobiliária:</strong> {row['imobiliaria']}</p>
                     </div>
                 """, unsafe_allow_html=True)

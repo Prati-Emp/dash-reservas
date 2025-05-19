@@ -2,6 +2,17 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import re
+import locale
+
+# Set locale to Brazilian Portuguese
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+
+def format_currency(value):
+    """Format currency value to Brazilian Real format"""
+    try:
+        return f"R$ {value:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return f"R$ {value}"
 
 # Configuração da página
 st.set_page_config(page_title="Relatório de Reservas", layout="wide")
@@ -161,7 +172,7 @@ with col1:
     st.metric(label="Total de Reservas", value=len(df_sem_canceladas_vendidas))
 with col2:
     valor_total = df_sem_canceladas_vendidas['valor_contrato'].sum()
-    st.metric(label="Valor Total", value=f"R$ {valor_total:,.2f}")
+    st.metric(label="Valor Total", value=format_currency(valor_total))
 
 # Reservas por Situação
 st.subheader("Reservas por Situação")
@@ -207,8 +218,12 @@ def highlight_fora_prazo(s):
 colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao', 
                 'tempo_na_situacao', 'valor_contrato', 'imobiliaria']
 
+# Formatar o valor do contrato antes de exibir
+df_exibir = df_sem_canceladas_vendidas[colunas_exibir].copy()
+df_exibir['valor_contrato'] = df_exibir['valor_contrato'].apply(format_currency)
+
 st.dataframe(
-    df_sem_canceladas_vendidas[colunas_exibir].style.apply(highlight_fora_prazo, axis=0),
+    df_exibir.style.apply(highlight_fora_prazo, axis=0),
     use_container_width=True
 )
 
