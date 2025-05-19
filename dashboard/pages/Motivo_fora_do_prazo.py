@@ -4,6 +4,7 @@ from datetime import datetime
 import re
 import requests
 import locale
+import duckdb
 
 # Set locale to Brazilian Portuguese
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -14,6 +15,13 @@ def format_currency(value):
         return f"R$ {value:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except:
         return f"R$ {value}"
+
+# MotherDuck connection
+@st.cache_resource
+def get_motherduck_connection():
+    """Create a cached connection to MotherDuck"""
+    token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRqb25hdGhhbjgwMTZAZ21haWwuY29tIiwic2Vzc2lvbiI6ImRqb25hdGhhbjgwMTYuZ21haWwuY29tIiwicGF0IjoiWWdJbjE5cUJCTUZQUXlLSFJrWUNXa0dQTHJ3MEFoUFZHLXo5NXo1d0hoNCIsInVzZXJJZCI6IjdkNTI0ZDBlLTU4NjAtNDQ2Yy04OTMxLTJkZmZlMzZlMDlkNSIsImlzcyI6Im1kX3BhdCIsInJlYWRPbmx5IjpmYWxzZSwidG9rZW5UeXBlIjoicmVhZF93cml0ZSIsImlhdCI6MTc0NzY4MTU0MH0.iQ91Md6R7MacKt2qT8qQS9F63S4JHbPtGx2KoUcyjjo'
+    return duckdb.connect('md:reservas?motherduck_token=' + token)
 
 # Configuração da página
 st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
@@ -47,8 +55,11 @@ def check_time_limit(row):
 # Carregando os dados
 @st.cache_data
 def load_data():
-    csv_path = r'C:\Users\Djonathan__Souza\OneDrive - Prati Empreendimentos ltda\backup\Desenvolvimento\double_try'
-    reservas_df = pd.read_csv(f'{csv_path}/reservas_abril.csv')
+    conn = get_motherduck_connection()      # Usando a tabela correta do MotherDuck
+    reservas_df = conn.sql("""
+        SELECT *
+        FROM reservas.main.reservas_abril
+    """).df()
     
     # Converter colunas de data
     reservas_df['data_cad'] = pd.to_datetime(reservas_df['data_cad'])
