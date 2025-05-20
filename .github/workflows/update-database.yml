@@ -29,24 +29,41 @@ jobs:
         
     - name: Set file permissions
       run: chmod +x *.py
-      
-    - name: Update database
+        - name: Update database
       env:
         MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
         CVCRM_EMAIL: ${{ secrets.CVCRM_EMAIL }}
         CVCRM_TOKEN: ${{ secrets.CVCRM_TOKEN }}
-        PYTHONPATH: ${{ github.workspace }}
+        PYTHONPATH: ${{ github.workspace }}/scripts:${{ github.workspace }}
       run: |
+        echo "Verificando estrutura do workspace..."
         pwd
         ls -la
+        ls -la scripts/
+
         echo "Verificando ambiente Python..."
         python --version
-        python -c "import sys; print(sys.path)"
-        echo "Verificando conteúdo do arquivo reservas.py..."
-        cat reservas.py
+        python -c "import sys; print('Python path:', sys.path)"
+
         echo "Executando script de reservas..."
-        python -u reservas.py
+        python -u scripts/reservas.py
+        if [ ! -f "reservas_abril.csv" ]; then
+          echo "Erro: arquivo reservas_abril.csv não foi gerado!"
+          exit 1
+        fi
+
         echo "Executando script de workflow..."
-        python -u workflow.py
-        echo "Atualizando banco de dados..."
+        python -u scripts/workflow.py
+        if [ ! -f "workflow_abril.csv" ]; then
+          echo "Erro: arquivo workflow_abril.csv não foi gerado!"
+          exit 1
+        fi
+
+        echo "Verificando conteúdo dos arquivos CSV..."
+        echo "Conteúdo de reservas_abril.csv:"
+        head -n 5 reservas_abril.csv
+        echo "Conteúdo de workflow_abril.csv:"
+        head -n 5 workflow_abril.csv
+
+        echo "Atualizando banco de dados MotherDuck..."
         python -u update_motherduck.py
