@@ -11,6 +11,7 @@ import locale
 import duckdb
 from dotenv import load_dotenv
 import os
+import plotly.express as px
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -148,8 +149,6 @@ def check_time_limit(row):
 df_sem_canceladas_vendidas['fora_do_prazo'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
 df_sem_canceladas_vendidas['dias_na_situacao'] = (datetime.now() - df_sem_canceladas_vendidas['data_ultima_alteracao_situacao']).dt.days
 
-# Análise por Imobiliária
-st.subheader("Análise por Imobiliária")
 analise_imobiliaria = df_sem_canceladas_vendidas.groupby('imobiliaria').agg({
     'idreserva': 'count',
     'fora_do_prazo': 'sum',
@@ -161,15 +160,12 @@ analise_imobiliaria.columns = ['Imobiliária', 'Total Reservas', 'Fora do Prazo'
 analise_imobiliaria['Média de Dias'] = analise_imobiliaria['Média de Dias'].round(1)
 analise_imobiliaria['Valor Total'] = analise_imobiliaria['Valor Total'].apply(format_currency)
 
-# Exibir tabela de análise por imobiliária
-st.table(analise_imobiliaria)
-
 # Análise comparativa Prati vs Outras Imobiliárias
 st.subheader("Comparativo Prati vs Outras Imobiliárias")
 
 # Separar dados Prati e outras imobiliárias
-df_prati = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['imobiliaria'] == 'PRATI EMPREENDIMENTOS']
-df_outras = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['imobiliaria'] != 'PRATI EMPREENDIMENTOS']
+df_prati = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['imobiliaria'].str.strip().str.upper() == 'PRATI EMPREENDIMENTOS']
+df_outras = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['imobiliaria'].str.strip().str.upper() != 'PRATI EMPREENDIMENTOS']
 
 # Análise por situação para cada grupo
 analise_situacao_prati = df_prati.groupby('situacao')['idreserva'].count().reset_index()
@@ -186,8 +182,41 @@ analise_comparativa = analise_comparativa.astype({'Prati': int, 'Outras': int})
 # Exibir tabela comparativa
 st.table(analise_comparativa)
 
+# Análise por Imobiliária
+st.subheader("Análise por Imobiliária")
+
+# Exibir tabela de análise por imobiliária
+st.table(analise_imobiliaria)
+
 # Gráfico de Barras - Reservas por Imobiliária
 st.subheader("Distribuição de Reservas por Imobiliária")
 chart_data = df_sem_canceladas_vendidas.groupby('imobiliaria')['idreserva'].count().reset_index()
 chart_data.columns = ['Imobiliária', 'Quantidade']
-st.bar_chart(data=chart_data, x='Imobiliária', y='Quantidade')
+# Ordenar do maior para o menor
+chart_data = chart_data.sort_values('Quantidade', ascending=False)
+
+# Criar gráfico com Plotly
+fig = px.bar(chart_data, 
+             x='Quantidade', 
+             y='Imobiliária',
+             orientation='h',  # Barras horizontais
+             text='Quantidade')  # Mostrar valores nas barras
+
+# Customizar o layout
+fig.update_layout(
+    height=600,  # Altura do gráfico
+    xaxis_title="Quantidade de Reservas",
+    yaxis_title="",
+    yaxis={'categoryorder':'total ascending'},  # Ordenar barras
+    plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+    showlegend=False
+)
+
+# Customizar as barras
+fig.update_traces(
+    textposition='outside',  # Posição dos números
+    marker_color='#1f77b4',  # Cor das barras
+)
+
+# Exibir o gráfico
+st.plotly_chart(fig, use_container_width=True)
