@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-import os
+import sys
 import requests
 import time
 import csv
@@ -10,17 +10,22 @@ from dotenv import load_dotenv
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
 
-# Configurações da API
-url = "https://prati.cvcrm.com.br/api/v1/cvdw/reservas"
-headers = {
-    "accept": "application/json",
-    "email": os.getenv('CVCRM_EMAIL', '').strip(),
-    "token": os.getenv('CVCRM_TOKEN', '').strip(),
-}
+try:
+    # Configurações da API
+    url = "https://prati.cvcrm.com.br/api/v1/cvdw/reservas"
+    headers = {
+        "accept": "application/json",
+        "email": os.environ.get('CVCRM_EMAIL', '').strip(),
+        "token": os.environ.get('CVCRM_TOKEN', '').strip(),
+    }
 
-print("DEBUG - Credenciais (após strip):")
-print(f"Email: {headers['email']}")
-print(f"Token: {headers['token']}")
+    print("DEBUG - Credenciais (após strip):")
+    print(f"Email: {headers['email']}")
+    print(f"Token: {headers['token']}")
+except Exception as e:
+    print(f"Erro ao configurar credenciais: {str(e)}")
+    print(f"Variáveis de ambiente disponíveis: {list(os.environ.keys())}")
+    sys.exit(1)
 
 # Data de corte - 01/04/2025
 DATA_CORTE = datetime(2025, 1, 1)
@@ -80,7 +85,11 @@ def gerar_csv(dados, nome_arquivo='reservas_abril.csv'):
     
     campos = list(dados[0].keys())  # Pega todos os campos do primeiro item
     
-    with open(nome_arquivo, 'w', newline='', encoding='utf-8') as f:
+    # Garantir que o diretório de trabalho atual seja usado
+    file_path = os.path.join(os.getcwd(), nome_arquivo)
+    print(f"Salvando arquivo em: {file_path}")
+    
+    with open(file_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=campos)
         writer.writeheader()
         writer.writerows(dados)
