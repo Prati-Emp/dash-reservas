@@ -188,35 +188,80 @@ st.subheader("Análise por Imobiliária")
 # Exibir tabela de análise por imobiliária
 st.table(analise_imobiliaria)
 
-# Gráfico de Barras - Reservas por Imobiliária
-st.subheader("Distribuição de Reservas por Imobiliária")
-chart_data = df_sem_canceladas_vendidas.groupby('imobiliaria')['idreserva'].count().reset_index()
-chart_data.columns = ['Imobiliária', 'Quantidade']
-# Ordenar do maior para o menor
-chart_data = chart_data.sort_values('Quantidade', ascending=False)
+# Criar duas colunas para os gráficos
+col_valor, col_qtd = st.columns(2)
 
-# Criar gráfico com Plotly
-fig = px.bar(chart_data, 
-             x='Quantidade', 
-             y='Imobiliária',
-             orientation='h',  # Barras horizontais
-             text='Quantidade')  # Mostrar valores nas barras
+with col_valor:
+    st.subheader("Distribuição de Valores por Imobiliária")
+    # Dados para o gráfico de valores
+    chart_data_valor = df_sem_canceladas_vendidas.groupby('imobiliaria')['valor_contrato'].sum().reset_index()
+    chart_data_valor.columns = ['Imobiliária', 'Valor']
+    chart_data_valor = chart_data_valor.sort_values('Valor', ascending=False)
+    chart_data_valor['Valor_Formatado'] = chart_data_valor['Valor'].apply(format_currency)
 
-# Customizar o layout
-fig.update_layout(
-    height=600,  # Altura do gráfico
-    xaxis_title="Quantidade de Reservas",
-    yaxis_title="",
-    yaxis={'categoryorder':'total ascending'},  # Ordenar barras
-    plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
-    showlegend=False
-)
+    # Criar gráfico de valores com Plotly
+    fig_valor = px.bar(chart_data_valor, 
+                x='Valor', 
+                y='Imobiliária',
+                orientation='h',
+                text='Valor_Formatado')    # Customizar o layout do gráfico de valores
+    fig_valor.update_layout(
+        height=600,
+        margin=dict(l=20, r=150, t=30, b=20),  # Aumentar margem direita para os valores
+        xaxis_title="Valor Total em R$",
+        yaxis_title="",
+        yaxis={
+            'categoryorder':'total ascending',
+            'tickfont': {'size': 10}  # Reduzir tamanho da fonte dos nomes
+        },
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False
+    )
 
-# Customizar as barras
-fig.update_traces(
-    textposition='outside',  # Posição dos números
-    marker_color='#1f77b4',  # Cor das barras
-)
+    # Customizar as barras do gráfico de valores
+    fig_valor.update_traces(
+        textposition='outside',
+        marker_color='#1f77b4',
+        textfont=dict(size=11),  # Tamanho da fonte dos valores
+        cliponaxis=False  # Evitar que o texto seja cortado
+    )
 
-# Exibir o gráfico
-st.plotly_chart(fig, use_container_width=True)
+    # Exibir o gráfico de valores
+    st.plotly_chart(fig_valor, use_container_width=True)
+
+with col_qtd:
+    st.subheader("Distribuição de Reservas por Imobiliária")
+    # Dados para o gráfico de quantidades
+    chart_data_qtd = df_sem_canceladas_vendidas.groupby('imobiliaria')['idreserva'].count().reset_index()
+    chart_data_qtd.columns = ['Imobiliária', 'Quantidade']
+    chart_data_qtd = chart_data_qtd.sort_values('Quantidade', ascending=False)
+
+    # Criar gráfico de quantidades com Plotly
+    fig_qtd = px.bar(chart_data_qtd, 
+                x='Quantidade', 
+                y='Imobiliária',
+                orientation='h',
+                text='Quantidade')    # Customizar o layout do gráfico de quantidades
+    fig_qtd.update_layout(
+        height=600,
+        margin=dict(l=20, r=150, t=30, b=20),  # Aumentar margem direita para os números
+        xaxis_title="Quantidade de Reservas",
+        yaxis_title="",
+        yaxis={
+            'categoryorder':'total ascending',
+            'tickfont': {'size': 10}  # Reduzir tamanho da fonte dos nomes
+        },
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False
+    )
+
+    # Customizar as barras do gráfico de quantidades
+    fig_qtd.update_traces(
+        textposition='outside',
+        marker_color='#2ca02c',  # Cor verde para diferenciar do gráfico de valores
+        textfont=dict(size=11),  # Tamanho da fonte dos valores
+        cliponaxis=False  # Evitar que o texto seja cortado
+    )
+
+    # Exibir o gráfico de quantidades
+    st.plotly_chart(fig_qtd, use_container_width=True)
