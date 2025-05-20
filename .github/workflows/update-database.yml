@@ -8,28 +8,30 @@ on:
 jobs:
   update-database:
     runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-      - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pandas duckdb requests python-dotenv
 
-    - name: Set file permissions
-      run: chmod +x scripts/*.py
-        
-    - name: Update database
-      env:
-        MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
-        CVCRM_EMAIL: ${{ secrets.CVCRM_EMAIL }}
-        CVCRM_TOKEN: ${{ secrets.CVCRM_TOKEN }}
-        PYTHONPATH: ${{ github.workspace }}/scripts:${{ github.workspace }}      run: |
-        echo "Iniciando atualização do MotherDuck..."
-        cd scripts
-        python -u update_motherduck.py
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas duckdb requests python-dotenv
+
+      - name: Set file permissions
+        run: chmod +x scripts/*.py
+
+      - name: Update database
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          CVCRM_EMAIL: ${{ secrets.CVCRM_EMAIL }}
+          CVCRM_TOKEN: ${{ secrets.CVCRM_TOKEN }}
+          PYTHONPATH: ${{ github.workspace }}/scripts:${{ github.workspace }}
+        run: |
+          echo "Iniciando atualização do MotherDuck..."
+          cd scripts
+          python -u update_motherduck.py
