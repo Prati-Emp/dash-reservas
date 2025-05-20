@@ -38,77 +38,77 @@ def format_currency(value):
     except:
         return f"R$ {value}"
 
-def hide_sidebar():
-    st.markdown("""
-    <style>
-        [data-testid="stSidebar"] {
-            display: none;
-        }
-        .stTextInput > div > div > input {
-            width: 200px !important;
-        }
-        .small-font {
-            font-size: 14px !important;
-            font-weight: normal !important;
-            text-align: center !important;
-        }
-        div[data-testid="stImage"] {
-            display: flex;
-            justify-content: center;
-        }
-        div.stButton > button {
-            width: 200px;
-            margin: 0 auto;
-            display: block;
-        }
-        div[data-testid="column"] {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+# def hide_sidebar():
+#     st.markdown("""
+#     <style>
+#         [data-testid="stSidebar"] {
+#             display: none;
+#         }
+#         .stTextInput > div > div > input {
+#             width: 200px !important;
+#         }
+#         .small-font {
+#             font-size: 14px !important;
+#             font-weight: normal !important;
+#             text-align: center !important;
+#         }
+#         div[data-testid="stImage"] {
+#             display: flex;
+#             justify-content: center;
+#         }
+#         div.stButton > button {
+#             width: 200px;
+#             margin: 0 auto;
+#             display: block;
+#         }
+#         div[data-testid="column"] {
+#             display: flex;
+#             flex-direction: column;
+#             align-items: center;
+#             justify-content: center;
+#         }
+#     </style>
+#     """, unsafe_allow_html=True)
 
-# Função para verificar senha
-def check_password():
-    """Returns `True` if the user had the correct password."""
+# # Função para verificar senha
+# def check_password():
+#     """Returns `True` if the user had the correct password."""
     
-    if "password_correct" not in st.session_state:
-        # First run, hide sidebar and show password input
-        hide_sidebar()
+#     if "password_correct" not in st.session_state:
+#         # First run, hide sidebar and show password input
+#         hide_sidebar()
         
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            # Logo centralizada usando arquivo local
-            st.image(get_logo_path(), width=400)
-            st.markdown("<br>", unsafe_allow_html=True)
+#         col1, col2, col3 = st.columns([1, 1, 1])
+#         with col2:
+#             # Logo centralizada usando arquivo local
+#             st.image(get_logo_path(), width=400)
+#             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Campo de senha com label menor e centralizado
-            st.markdown('<p class="small-font">Por favor, digite a senha para acessar o dashboard:</p>', unsafe_allow_html=True)
-            password = st.text_input(
-                "",
-                type="password",
-                key="password",
-                label_visibility="collapsed"
-            )
+#             # Campo de senha com label menor e centralizado
+#             st.markdown('<p class="small-font">Por favor, digite a senha para acessar o dashboard:</p>', unsafe_allow_html=True)
+#             password = st.text_input(
+#                 "",
+#                 type="password",
+#                 key="password",
+#                 label_visibility="collapsed"
+#             )
             
-            # Botão de entrar
-            if st.button("Entrar"):
-                if password == "prati2025":
-                    st.session_state["password_correct"] = True
-                    st.rerun()
-                else:
-                    st.error("😕 Senha incorreta")
-        return False
+#             # Botão de entrar
+#             if st.button("Entrar"):
+#                 if password == "prati2025":
+#                     st.session_state["password_correct"] = True
+#                     st.rerun()
+#                 else:
+#                     st.error("😕 Senha incorreta")
+#         return False
     
-    return st.session_state.get("password_correct", False)
+#     return st.session_state.get("password_correct", False)
 
-# Verifica a senha antes de mostrar qualquer conteúdo
-if not check_password():
-    st.stop()  # Não mostra nada além deste ponto se a senha estiver errada
+# # Verifica a senha antes de mostrar qualquer conteúdo
+# if not check_password():
+#     st.stop()  # Não mostra nada além deste ponto se a senha estiver errada
 
-# Se chegou aqui, a senha está correta
+# # Se chegou aqui, a senha está correta
 # Título do aplicativo
 st.title("📊 Relatório de Reservas")
 
