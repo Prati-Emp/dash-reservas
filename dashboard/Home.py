@@ -189,7 +189,7 @@ empreendimentos = sorted(reservas_df['empreendimento'].unique())
 empreendimento_selecionado = st.sidebar.selectbox("Empreendimento", ["Todos"] + list(empreendimentos))
 
 # Filtro de situação
-situacoes = sorted(reservas_df['situacao'].unique())
+situacoes = sorted(reservas_df[~reservas_df['situacao'].isin(['Vendida', 'Distrato', 'Cancelada'])]['situacao'].unique())
 situacao_selecionada = st.sidebar.selectbox("Situação", ["Todas"] + list(situacoes))
 
 # Aplicar filtros
