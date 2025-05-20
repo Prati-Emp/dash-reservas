@@ -6,17 +6,34 @@ from dotenv import load_dotenv
 
 def get_motherduck_connection():
     """Create a connection to MotherDuck"""
-    token = os.environ.get('MOTHERDUCK_TOKEN')
+    token = os.environ.get('MOTHERDUCK_TOKEN', '').strip()
     print("\nDebug - Verificando token do MotherDuck:")
     print(f"Token encontrado: {'Sim' if token else 'Não'}")
-    print(f"Tamanho do token: {len(token) if token else 0}")
     
     if not token:
         print("Variáveis de ambiente disponíveis:", list(os.environ.keys()))
         raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
     
-    connection_string = f'md:reservas?motherduck_token={token}'
-    print(f"Tentando conectar com: md:reservas?motherduck_token={'*' * len(token)}")
+    # Remover qualquer caractere especial ou espaço do token
+    token = token.strip().strip('"').strip("'")
+    
+    # Configurar a conexão DuckDB primeiro
+    duckdb.sql("INSTALL motherduck")
+    duckdb.sql("LOAD motherduck")
+    
+    try:
+        # Configurar o token antes de conectar
+        os.environ['motherduck_token'] = token
+        
+        # Tentar conexão
+        conn = duckdb.connect('md:reservas')
+        print("Conexão estabelecida com sucesso!")
+        return conn
+    except Exception as e:
+        print(f"\nErro na conexão com MotherDuck:")
+        print(f"- Erro original: {str(e)}")
+        print("- Verifique se o token está correto")
+        raise
     
     try:
         return duckdb.connect(connection_string)
