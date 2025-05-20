@@ -1,6 +1,7 @@
 import requests
 import time
 import csv
+import os
 from datetime import datetime
 
 # Configurações da API
