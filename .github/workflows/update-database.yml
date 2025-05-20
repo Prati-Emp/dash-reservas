@@ -30,13 +30,15 @@ jobs:
 
     - name: Set file permissions
       run: chmod +x *.py
-      
     - name: Update database
       env:
         MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
         CVCRM_EMAIL: ${{ secrets.CVCRM_EMAIL }}
         CVCRM_TOKEN: ${{ secrets.CVCRM_TOKEN }}
       run: |
+        cd "$GITHUB_WORKSPACE"
+        pwd
+        ls -la
         echo "Executando script de reservas..."
         python reservas.py
         echo "Executando script de workflow..."
