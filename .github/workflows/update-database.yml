@@ -21,12 +21,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pandas duckdb requests python-dotenv
-    
-    - name: Create .env file
+      - name: Create .env file
       run: |
         echo "MOTHERDUCK_TOKEN=${{ secrets.MOTHERDUCK_TOKEN }}" > .env
         echo "CVCRM_EMAIL=${{ secrets.CVCRM_EMAIL }}" >> .env
-        echo "CVCRM_TOKEN=${{ secrets.CVCRM_TOKEN }}" >> .env    - name: Set file permissions
+        echo "CVCRM_TOKEN=${{ secrets.CVCRM_TOKEN }}" >> .env
+        
+    - name: Set file permissions
       run: chmod +x *.py
       
     - name: Update database

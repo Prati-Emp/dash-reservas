@@ -4,7 +4,6 @@ import csv
 import os
 from datetime import datetime
 
-# Configurações da API
 url = 'https://prati.cvcrm.com.br/api/v1/cvdw/reservas/workflow/tempo'
 headers = {
     "accept": "application/json",
@@ -20,7 +19,7 @@ def filtrar_por_data(dados):
     dados_filtrados = []
     for item in dados:
         try:
-            data_str = item.get('referencia_data', '').split()[0]  # Pega apenas a data
+            data_str = item.get('referencia_data', '').split()[0]
             data_item = datetime.strptime(data_str, "%Y-%m-%d")
             if data_item >= DATA_CORTE:
                 dados_filtrados.append(item)
@@ -54,7 +53,7 @@ def obter_todos_dados():
                 break
                 
             pagina += 1
-            time.sleep(3)  # Delay para não sobrecarregar a API
+            time.sleep(3)
             
         except Exception as e:
             print(f"Erro na página {pagina}: {str(e)}")
@@ -68,7 +67,7 @@ def gerar_csv(dados, nome_arquivo='workflow_abril.csv'):
         print("Nenhum dado para exportar")
         return
     
-    campos = list(dados[0].keys())  # Pega todos os campos do primeiro item
+    campos = list(dados[0].keys())
     
     with open(nome_arquivo, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=campos)
