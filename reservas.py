@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
+import os
 import requests
 import time
 import csv
-import os
 from datetime import datetime
 from dotenv import load_dotenv
 

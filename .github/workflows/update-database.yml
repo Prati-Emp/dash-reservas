@@ -26,22 +26,26 @@ jobs:
       run: |
         echo "MOTHERDUCK_TOKEN=${{ secrets.MOTHERDUCK_TOKEN }}" > .env
         echo "CVCRM_EMAIL=${{ secrets.CVCRM_EMAIL }}" >> .env
-        echo "CVCRM_TOKEN=${{ secrets.CVCRM_TOKEN }}" >> .env
-
-    - name: Set file permissions
+        echo "CVCRM_TOKEN=${{ secrets.CVCRM_TOKEN }}" >> .env    - name: Set file permissions
       run: chmod +x *.py
+      
     - name: Update database
       env:
         MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
         CVCRM_EMAIL: ${{ secrets.CVCRM_EMAIL }}
         CVCRM_TOKEN: ${{ secrets.CVCRM_TOKEN }}
+        PYTHONPATH: ${{ github.workspace }}
       run: |
-        cd "$GITHUB_WORKSPACE"
         pwd
         ls -la
+        echo "Verificando ambiente Python..."
+        python --version
+        python -c "import sys; print(sys.path)"
+        echo "Verificando conteúdo do arquivo reservas.py..."
+        cat reservas.py
         echo "Executando script de reservas..."
-        python reservas.py
+        python -u reservas.py
         echo "Executando script de workflow..."
-        python workflow.py
+        python -u workflow.py
         echo "Atualizando banco de dados..."
-        python update_motherduck.py
+        python -u update_motherduck.py
