@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 # Carregar variáveis de ambiente
 load_dotenv()
 
-# Set locale to Brazilian Portuguese
+# Set locale to Brazilian Portuguese silently
 try:
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 except locale.Error:
@@ -29,7 +29,7 @@ except locale.Error:
         try:
             locale.setlocale(locale.LC_ALL, 'pt_BR')
         except locale.Error:
-            st.warning('Não foi possível configurar o locale para português do Brasil. Alguns formatos podem aparecer em inglês.')
+            pass
 
 def format_currency(value):
     """Format currency value to Brazilian Real format"""
