@@ -1,14 +1,15 @@
 import requests
 import time
 import csv
+import os
 from datetime import datetime
 
 # Configurações da API
 url = 'https://prati.cvcrm.com.br/api/v1/cvdw/reservas/workflow/tempo'
 headers = {
     "accept": "application/json",
-    "email": "djonathan.souza@grupoprati.com",
-    "token": "394f594bc6192c86d94f329355ae13ca0b78a2a9",
+    "email": os.getenv('CVCRM_EMAIL'),
+    "token": os.getenv('CVCRM_TOKEN'),
 }
 
 # Data de corte - 01/04/2025

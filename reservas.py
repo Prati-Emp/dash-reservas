@@ -3,14 +3,22 @@ import time
 import csv
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente do arquivo .env
+load_dotenv()
 
 # Configurações da API
 url = "https://prati.cvcrm.com.br/api/v1/cvdw/reservas"
 headers = {
     "accept": "application/json",
-    "email": os.getenv('CVCRM_EMAIL'),
-    "token": os.getenv('CVCRM_TOKEN'),
+    "email": os.getenv('CVCRM_EMAIL', '').strip(),
+    "token": os.getenv('CVCRM_TOKEN', '').strip(),
 }
+
+print("DEBUG - Credenciais (após strip):")
+print(f"Email: {headers['email']}")
+print(f"Token: {headers['token']}")
 
 # Data de corte - 01/04/2025
 DATA_CORTE = datetime(2025, 1, 1)
