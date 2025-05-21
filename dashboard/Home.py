@@ -140,31 +140,24 @@ def check_time_limit(row):
 def get_motherduck_connection():
     """Create a cached connection to MotherDuck"""
     try:        
-        # Tentar obter o token
         token = os.getenv('MOTHERDUCK_TOKEN')
         st.write("Token encontrado:", "Sim" if token else "Não")
         
         if not token:
-            # Se não encontrar o token, tentar carregar novamente o .env
             load_dotenv(override=True)
             token = os.getenv('MOTHERDUCK_TOKEN')
             st.write("Token após reload do .env:", "Sim" if token else "Não")
             
             if not token:
                 raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
-        
-        # Sanitize o token
+
+        # Sanitize
         token = token.strip().strip('"').strip("'")
+        os.environ["MOTHERDUCK_TOKEN"] = token  
         
-        # Conectar diretamente ao MotherDuck com o token na URL (formato para conta free)
-        connection_string = f'motherduck:reservas?motherduck_token={token}'
-        
-        try:
-            conn = duckdb.connect(connection_string)
-            return conn
-        except Exception as e:
-            st.error(f"Erro na conexão com MotherDuck: {str(e)}")
-            raise
+        conn = duckdb.connect("md:reservas")
+        return conn
+
     except Exception as e:
         st.error(f"Erro ao configurar conexão: {str(e)}")
         raise
