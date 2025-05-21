@@ -1,6 +1,6 @@
 streamlit
 pandas
-duckdb
+duckdb==1.2.2
 python-dotenv
 requests
 babel
