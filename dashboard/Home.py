@@ -243,6 +243,11 @@ quantidade_por_situacao.columns = ['Situação', 'Quantidade']
 # Verificar fora do prazo diretamente na tabela de reservas
 df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]
 df_sem_canceladas_vendidas['tempo_excedido'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
+df_sem_canceladas_vendidas['dias_na_situacao'] = (datetime.now() - df_sem_canceladas_vendidas['data_ultima_alteracao_situacao']).dt.days
+
+# Calcular tempo médio por situação
+tempo_medio = df_sem_canceladas_vendidas.groupby('situacao')['dias_na_situacao'].mean().round(0).astype(int).reset_index()
+tempo_medio.columns = ['Situação', 'Tempo Médio']
 
 # Contar fora do prazo por situação
 fora_prazo_por_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('situacao')['tempo_excedido'].count().reset_index()
@@ -250,7 +255,9 @@ fora_prazo_por_situacao.columns = ['Situação', 'Fora do Prazo']
 
 # Juntar as informações
 reservas_por_situacao = pd.merge(quantidade_por_situacao, fora_prazo_por_situacao, on='Situação', how='left')
+reservas_por_situacao = pd.merge(reservas_por_situacao, tempo_medio, on='Situação', how='left')
 reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao['Fora do Prazo'].fillna(0).astype(int)
+reservas_por_situacao['Tempo Médio'] = reservas_por_situacao['Tempo Médio'].fillna(0).astype(int)
 
 # Garantir que "Fora do Prazo" não seja maior que "Quantidade"
 reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
@@ -285,6 +292,27 @@ st.dataframe(
     df_exibir.style.apply(highlight_fora_prazo, axis=0),
     use_container_width=True
 )
+
+# Contar fora do prazo por situação
+fora_prazo_por_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('situacao')['tempo_excedido'].count().reset_index()
+fora_prazo_por_situacao.columns = ['Situação', 'Fora do Prazo']
+
+# Calcular tempo médio por situação
+tempo_medio_situacao = df_sem_canceladas_vendidas.groupby('situacao')['tempo_na_situacao'].mean().round(0).astype(int).reset_index()
+tempo_medio_situacao.columns = ['Situação', 'Tempo Médio']
+
+# Juntar as informações
+reservas_por_situacao = pd.merge(quantidade_por_situacao, fora_prazo_por_situacao, on='Situação', how='left')
+reservas_por_situacao = pd.merge(reservas_por_situacao, tempo_medio_situacao, on='Situação', how='left')
+reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao['Fora do Prazo'].fillna(0).astype(int)
+
+# Garantir que "Fora do Prazo" não seja maior que "Quantidade"
+reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
+    lambda row: min(row['Fora do Prazo'], row['Quantidade']), 
+    axis=1
+)
+
+st.table(reservas_por_situacao)
 
 # Análise de workflow
 if st.checkbox("Mostrar Análise de Workflow"):

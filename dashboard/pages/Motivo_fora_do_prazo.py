@@ -164,14 +164,23 @@ with col3:
 
 # Análise por situação
 st.subheader("Análise por Situação")
+
+# Calcular tempo médio para todas as reservas por situação
+tempo_medio = df_sem_canceladas_vendidas.groupby('situacao')['dias_na_situacao'].mean().round(0).astype(int)
+
+# Análise das reservas fora do prazo
 analise_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']].groupby('situacao').agg({
     'idreserva': 'count',
-    'dias_na_situacao': 'mean',
     'valor_contrato': 'sum'
 }).reset_index()
 
-analise_situacao.columns = ['Situação', 'Quantidade', 'Média de Dias', 'Valor Total']
-analise_situacao['Média de Dias'] = analise_situacao['Média de Dias'].round(1)
+# Adicionar tempo médio à análise
+analise_situacao = analise_situacao.merge(
+    tempo_medio.reset_index().rename(columns={'dias_na_situacao': 'Tempo Médio'}),
+    on='situacao'
+)
+
+analise_situacao.columns = ['Situação', 'Quantidade', 'Valor Total', 'Tempo Médio']
 analise_situacao['Valor Total'] = analise_situacao['Valor Total'].apply(format_currency)
 
 st.table(analise_situacao)
