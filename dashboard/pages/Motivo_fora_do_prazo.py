@@ -43,18 +43,14 @@ def get_motherduck_connection():
         if not token:
             raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
         
-        # Configurar o token como variável de ambiente (necessário no Linux)
-        os.environ['motherduck_token'] = token.strip()
+        # Sanitize o token
+        token = token.strip().strip('"').strip("'")
+        
+        # Conectar diretamente ao MotherDuck com o token na URL (formato para conta free)
+        connection_string = f'motherduck:reservas?motherduck_token={token}'
         
         try:
-            # Tentar conexão com configuração explícita
-            conn = duckdb.connect(database=':memory:', config={'motherduck_token': token})
-            
-            # Carregar extensão motherduck
-            conn.execute("INSTALL motherduck; LOAD motherduck;")
-            
-            # Conectar ao MotherDuck
-            conn = duckdb.connect('md:reservas')
+            conn = duckdb.connect(connection_string)
             return conn
         except Exception as e:
             st.error(f"Erro na conexão com MotherDuck: {str(e)}")
