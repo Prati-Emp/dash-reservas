@@ -39,10 +39,30 @@ def format_currency(value):
 @st.cache_resource
 def get_motherduck_connection():
     """Create a cached connection to MotherDuck"""
-    token = os.getenv('MOTHERDUCK_TOKEN')
-    if not token:
-        raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
-    return duckdb.connect('md:reservas?motherduck_token=' + token)
+    try:
+        token = os.getenv('MOTHERDUCK_TOKEN')
+        if not token:
+            raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
+        
+        # Configurar o token como variável de ambiente (necessário no Linux)
+        os.environ['motherduck_token'] = token.strip()
+        
+        try:
+            # Tentar conexão com configuração explícita
+            conn = duckdb.connect(database=':memory:', config={'motherduck_token': token})
+            
+            # Carregar extensão motherduck
+            conn.execute("INSTALL motherduck; LOAD motherduck;")
+            
+            # Conectar ao MotherDuck
+            conn = duckdb.connect('md:reservas')
+            return conn
+        except Exception as e:
+            st.error(f"Erro na conexão com MotherDuck: {str(e)}")
+            raise
+    except Exception as e:
+        st.error(f"Erro ao configurar conexão: {str(e)}")
+        raise
 
 # Carregando os dados
 @st.cache_data
