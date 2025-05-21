@@ -139,10 +139,19 @@ def check_time_limit(row):
 @st.cache_resource
 def get_motherduck_connection():
     """Create a cached connection to MotherDuck"""
-    try:
+    try:        
+        # Tentar obter o token
         token = os.getenv('MOTHERDUCK_TOKEN')
+        st.write("Token encontrado:", "Sim" if token else "Não")
+        
         if not token:
-            raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
+            # Se não encontrar o token, tentar carregar novamente o .env
+            load_dotenv(override=True)
+            token = os.getenv('MOTHERDUCK_TOKEN')
+            st.write("Token após reload do .env:", "Sim" if token else "Não")
+            
+            if not token:
+                raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
         
         # Sanitize o token
         token = token.strip().strip('"').strip("'")
