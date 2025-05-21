@@ -3,6 +3,13 @@ import streamlit as st
 # Configuração da página
 st.set_page_config(page_title="Imobiliária", layout="wide")
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from utils import display_logo
+# Mostrar logo
+display_logo()
+
 import pandas as pd
 from datetime import datetime
 import re
