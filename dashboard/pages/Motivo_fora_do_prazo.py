@@ -185,6 +185,29 @@ analise_situacao['Valor Total'] = analise_situacao['Valor Total'].apply(format_c
 
 st.table(analise_situacao)
 
+# Análise por empreendimento
+st.subheader("Análise por Empreendimento")
+
+# Calcular tempo médio para todas as reservas por empreendimento
+tempo_medio_emp = df_sem_canceladas_vendidas.groupby('empreendimento')['dias_na_situacao'].mean().round(0).astype(int)
+
+# Análise das reservas fora do prazo por empreendimento
+analise_empreendimento = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']].groupby('empreendimento').agg({
+    'idreserva': 'count',
+    'valor_contrato': 'sum'
+}).reset_index()
+
+# Adicionar tempo médio à análise
+analise_empreendimento = analise_empreendimento.merge(
+    tempo_medio_emp.reset_index().rename(columns={'dias_na_situacao': 'Tempo Médio'}),
+    on='empreendimento'
+)
+
+analise_empreendimento.columns = ['Empreendimento', 'Quantidade', 'Valor Total', 'Tempo Médio']
+analise_empreendimento['Valor Total'] = analise_empreendimento['Valor Total'].apply(format_currency)
+
+st.table(analise_empreendimento)
+
 @st.cache_data
 def get_reservation_messages(idreserva):
     """Busca as mensagens de uma reserva específica"""
