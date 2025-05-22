@@ -285,6 +285,53 @@ reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=
 
 st.table(reservas_por_situacao)
 
+# Reservas por Empreendimento
+st.subheader("Reservas por Empreendimento")
+
+# Contar reservas por empreendimento
+quantidade_por_empreendimento = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]['empreendimento'].value_counts().reset_index()
+quantidade_por_empreendimento.columns = ['Empreendimento', 'Quantidade']
+
+# Contar fora do prazo por empreendimento
+fora_prazo_por_empreendimento = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('empreendimento')['tempo_excedido'].count().reset_index()
+fora_prazo_por_empreendimento.columns = ['Empreendimento', 'Fora do Prazo']
+
+# Calcular tempo médio por empreendimento
+tempo_medio_empreendimento = df_sem_canceladas_vendidas.groupby('empreendimento')['dias_na_situacao'].mean().round(0).astype(int).reset_index()
+tempo_medio_empreendimento.columns = ['Empreendimento', 'Tempo Médio']
+
+# Juntar as informações
+reservas_por_empreendimento = pd.merge(quantidade_por_empreendimento, fora_prazo_por_empreendimento, on='Empreendimento', how='left')
+reservas_por_empreendimento = pd.merge(reservas_por_empreendimento, tempo_medio_empreendimento, on='Empreendimento', how='left')
+reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento['Fora do Prazo'].fillna(0).astype(int)
+reservas_por_empreendimento['Tempo Médio'] = reservas_por_empreendimento['Tempo Médio'].fillna(0).astype(int)
+
+# Garantir que "Fora do Prazo" não seja maior que "Quantidade"
+reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento.apply(
+    lambda row: min(row['Fora do Prazo'], row['Quantidade']), 
+    axis=1
+)
+
+# Calcular "Dentro do Prazo"
+reservas_por_empreendimento['Dentro do Prazo'] = reservas_por_empreendimento['Quantidade'] - reservas_por_empreendimento['Fora do Prazo']
+
+# Reordenar as colunas e renomear 'Tempo Médio' para 'Tempo Médio (dias)'
+reservas_por_empreendimento = reservas_por_empreendimento[['Empreendimento', 'Dentro do Prazo', 'Fora do Prazo', 'Tempo Médio', 'Quantidade']]
+reservas_por_empreendimento = reservas_por_empreendimento.rename(columns={'Tempo Médio': 'Tempo Médio (dias)'})
+
+# Adicionar linha de totais
+totais_empreendimento = pd.DataFrame([{
+    'Empreendimento': 'Total',
+    'Dentro do Prazo': reservas_por_empreendimento['Dentro do Prazo'].sum(),
+    'Fora do Prazo': reservas_por_empreendimento['Fora do Prazo'].sum(),
+    'Tempo Médio (dias)': round(reservas_por_empreendimento['Tempo Médio (dias)'].mean()),
+    'Quantidade': reservas_por_empreendimento['Quantidade'].sum()
+}])
+
+reservas_por_empreendimento = pd.concat([reservas_por_empreendimento, totais_empreendimento], ignore_index=True)
+
+st.table(reservas_por_empreendimento)
+
 # Tabela detalhada
 st.subheader("Lista de Reservas")
 
@@ -314,27 +361,6 @@ st.dataframe(
     df_exibir.style.apply(highlight_fora_prazo, axis=0),
     use_container_width=True
 )
-
-# Contar fora do prazo por situação
-fora_prazo_por_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('situacao')['tempo_excedido'].count().reset_index()
-fora_prazo_por_situacao.columns = ['Situação', 'Fora do Prazo']
-
-# Calcular tempo médio por situação
-tempo_medio_situacao = df_sem_canceladas_vendidas.groupby('situacao')['tempo_na_situacao'].mean().round(0).astype(int).reset_index()
-tempo_medio_situacao.columns = ['Situação', 'Tempo Médio']
-
-# Juntar as informações
-reservas_por_situacao = pd.merge(quantidade_por_situacao, fora_prazo_por_situacao, on='Situação', how='left')
-reservas_por_situacao = pd.merge(reservas_por_situacao, tempo_medio_situacao, on='Situação', how='left')
-reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao['Fora do Prazo'].fillna(0).astype(int)
-
-# Garantir que "Fora do Prazo" não seja maior que "Quantidade"
-reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
-    lambda row: min(row['Fora do Prazo'], row['Quantidade']), 
-    axis=1
-)
-
-st.table(reservas_por_situacao)
 
 # Análise de workflow
 if st.checkbox("Mostrar Análise de Workflow"):
