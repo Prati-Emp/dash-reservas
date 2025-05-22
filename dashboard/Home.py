@@ -268,15 +268,16 @@ reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
 # Calcular "Dentro do Prazo"
 reservas_por_situacao['Dentro do Prazo'] = reservas_por_situacao['Quantidade'] - reservas_por_situacao['Fora do Prazo']
 
-# Reordenar as colunas
+# Reordenar as colunas e renomear 'Tempo Médio' para 'Tempo Médio (dias)'
 reservas_por_situacao = reservas_por_situacao[['Situação', 'Dentro do Prazo', 'Fora do Prazo', 'Tempo Médio', 'Quantidade']]
+reservas_por_situacao = reservas_por_situacao.rename(columns={'Tempo Médio': 'Tempo Médio (dias)'})
 
 # Adicionar linha de totais
 totais = pd.DataFrame([{
     'Situação': 'Total',
     'Dentro do Prazo': reservas_por_situacao['Dentro do Prazo'].sum(),
     'Fora do Prazo': reservas_por_situacao['Fora do Prazo'].sum(),
-    'Tempo Médio': round(reservas_por_situacao['Tempo Médio'].mean()),
+    'Tempo Médio (dias)': round(reservas_por_situacao['Tempo Médio (dias)'].mean()),
     'Quantidade': reservas_por_situacao['Quantidade'].sum()
 }])
 
