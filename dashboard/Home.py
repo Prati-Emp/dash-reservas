@@ -274,10 +274,10 @@ reservas_por_situacao = reservas_por_situacao[['Situação', 'Dentro do Prazo', 
 # Adicionar linha de totais
 totais = pd.DataFrame([{
     'Situação': 'Total',
-    'Quantidade': reservas_por_situacao['Quantidade'].sum(),
     'Dentro do Prazo': reservas_por_situacao['Dentro do Prazo'].sum(),
     'Fora do Prazo': reservas_por_situacao['Fora do Prazo'].sum(),
-    'Tempo Médio': round(reservas_por_situacao['Tempo Médio'].mean())
+    'Tempo Médio': round(reservas_por_situacao['Tempo Médio'].mean()),
+    'Quantidade': reservas_por_situacao['Quantidade'].sum()
 }])
 
 reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=True)
@@ -304,6 +304,10 @@ colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao',
 # Formatar o valor do contrato antes de exibir
 df_exibir = df_sem_canceladas_vendidas[colunas_exibir].copy()
 df_exibir['valor_contrato'] = df_exibir['valor_contrato'].apply(format_currency)
+
+# Renomear as colunas para title case
+df_exibir.columns = ['Id Reserva', 'Cliente', 'Empreendimento', 'Situação', 
+                   'Tempo na Situação', 'Valor Contrato', 'Imobiliária']
 
 st.dataframe(
     df_exibir.style.apply(highlight_fora_prazo, axis=0),
