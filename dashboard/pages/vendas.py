@@ -36,11 +36,11 @@ def format_currency(value):
     """Format currency value to Brazilian Real format with MI (millions) or MIL (thousands)"""
     try:
         if value >= 1_000_000:  # Se for 1 milhão ou mais
-            return f"R$ {value/1_000_000:.1f}Mi".replace(".", ",")
+            return f"R$ {value/1_000_000:.1f}Mi"
         elif value >= 1_000:  # Se for 1 mil ou mais
-            return f"R$ {value/1_000:.1f}Mil".replace(".", ",")
+            return f"R$ {value/1_000:.1f}Mil"
         else:
-            return f"R$ {value:.1f}".replace(".", ",")
+            return f"R$ {value:.1f}"
     except:
         return f"R$ {value}"
 
@@ -175,7 +175,7 @@ st.table(analise_origem)
 st.divider()
 
 # Análise estratificada por empreendimento e tipo de venda
-st.subheader("Estratificação por Tipo de Venda")
+st.subheader("Filtro por Tipo de Venda")
 
 # Criar DataFrames separados para cada métrica
 # Usar apenas vendas efetivas

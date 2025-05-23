@@ -114,7 +114,7 @@ def format_currency(value):
 
 # # Se chegou aqui, a senha está correta
 # Título do aplicativo
-st.title("📊 Relatório de Reservas")
+st.title("📊 Relatório De Reservas")
 
 def extract_days(situacao):
     # Extrai o número entre parênteses da situação
@@ -227,13 +227,13 @@ df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancela
 
 col1, col2 = st.columns(2)
 with col1:
-    st.metric(label="Total de Reservas", value=len(df_sem_canceladas_vendidas))
+    st.metric(label="Total De Reservas", value=len(df_sem_canceladas_vendidas))
 with col2:
     valor_total = df_sem_canceladas_vendidas['valor_contrato'].sum()
     st.metric(label="Valor Total", value=format_currency(valor_total))
 
 # Reservas por Situação
-st.subheader("Reservas por Situação")
+st.subheader("Reservas Por Situação")
 
 # Contar reservas por situação do df_filtrado
 quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]['situacao'].value_counts().reset_index()
@@ -267,9 +267,9 @@ reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
 # Calcular "Dentro do Prazo"
 reservas_por_situacao['Dentro do Prazo'] = reservas_por_situacao['Quantidade'] - reservas_por_situacao['Fora do Prazo']
 
-# Reordenar as colunas e renomear 'Tempo Médio' para 'Tempo Médio (dias)'
-reservas_por_situacao = reservas_por_situacao[['Situação', 'Dentro do Prazo', 'Fora do Prazo', 'Tempo Médio', 'Quantidade']]
-reservas_por_situacao = reservas_por_situacao.rename(columns={'Tempo Médio': 'Tempo Médio (dias)'})
+# Reordenar as colunas e renomear para title case
+reservas_por_situacao = reservas_por_situacao[['Situação', 'Dentro Do Prazo', 'Fora Do Prazo', 'Tempo Médio', 'Quantidade']]
+reservas_por_situacao = reservas_por_situacao.rename(columns={'Tempo Médio': 'Tempo Médio (Dias)'})
 
 # Adicionar linha de totais
 totais = pd.DataFrame([{
@@ -285,7 +285,7 @@ reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=
 st.table(reservas_por_situacao)
 
 # Reservas por Empreendimento
-st.subheader("Reservas por Empreendimento")
+st.subheader("Reservas Por Empreendimento")
 
 # Contar reservas por empreendimento
 quantidade_por_empreendimento = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]['empreendimento'].value_counts().reset_index()
@@ -314,9 +314,9 @@ reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento.apply
 # Calcular "Dentro do Prazo"
 reservas_por_empreendimento['Dentro do Prazo'] = reservas_por_empreendimento['Quantidade'] - reservas_por_empreendimento['Fora do Prazo']
 
-# Reordenar as colunas e renomear 'Tempo Médio' para 'Tempo Médio (dias)'
-reservas_por_empreendimento = reservas_por_empreendimento[['Empreendimento', 'Dentro do Prazo', 'Fora do Prazo', 'Tempo Médio', 'Quantidade']]
-reservas_por_empreendimento = reservas_por_empreendimento.rename(columns={'Tempo Médio': 'Tempo Médio (dias)'})
+# Reordenar as colunas e renomear para title case
+reservas_por_empreendimento = reservas_por_empreendimento[['Empreendimento', 'Dentro Do Prazo', 'Fora Do Prazo', 'Tempo Médio', 'Quantidade']]
+reservas_por_empreendimento = reservas_por_empreendimento.rename(columns={'Tempo Médio': 'Tempo Médio (Dias)'})
 
 # Adicionar linha de totais
 totais_empreendimento = pd.DataFrame([{
@@ -332,7 +332,7 @@ reservas_por_empreendimento = pd.concat([reservas_por_empreendimento, totais_emp
 st.table(reservas_por_empreendimento)
 
 # Tabela detalhada
-st.subheader("Lista de Reservas")
+st.subheader("Lista De Reservas")
 
 # Calcular o tempo na situação atual
 df_sem_canceladas_vendidas['tempo_na_situacao'] = (datetime.now() - pd.to_datetime(df_sem_canceladas_vendidas['data_ultima_alteracao_situacao'])).dt.days
@@ -354,7 +354,7 @@ df_exibir['valor_contrato'] = df_exibir['valor_contrato'].apply(format_currency)
 
 # Renomear as colunas para title case
 df_exibir.columns = ['Id Reserva', 'Cliente', 'Empreendimento', 'Situação', 
-                   'Tempo na Situação', 'Valor Contrato', 'Imobiliária']
+                   'Tempo Na Situação', 'Valor Contrato', 'Imobiliária']
 
 st.dataframe(
     df_exibir.style.apply(highlight_fora_prazo, axis=0),
@@ -362,8 +362,8 @@ st.dataframe(
 )
 
 # Análise de workflow
-if st.checkbox("Mostrar Análise de Workflow"):
-    st.subheader("Análise de Workflow")
+if st.checkbox("Mostrar Análise De Workflow"):
+    st.subheader("Análise De Workflow")
     # Usar os dados filtrados diretamente da tabela de reservas
     workflow_agregado = df_filtrado.groupby('situacao')['idreserva'].count().reset_index()
     st.bar_chart(data=workflow_agregado, x='situacao', y='idreserva')
