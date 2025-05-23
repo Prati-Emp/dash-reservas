@@ -115,7 +115,7 @@ st.sidebar.header("Filtros")
 # Filtro de data
 data_inicio = st.sidebar.date_input(
     "Data Inicial",
-    value=pd.Timestamp('2025-04-01'),  # Data padrão definida para 01/04/2025
+    value=pd.Timestamp('2025-01-01'),  # Data padrão definida para 01/01/2025
     min_value=min(reservas_df['data_cad'].dt.date),
     max_value=max(reservas_df['data_cad'].dt.date)
 )
