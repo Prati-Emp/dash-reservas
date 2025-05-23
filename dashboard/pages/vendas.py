@@ -132,7 +132,7 @@ if empreendimento_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado['empreendimento'] == empreendimento_selecionado]
 
 # Métricas principais
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     total_vendas = len(df_filtrado[df_filtrado['situacao'] == 'Vendida'])
@@ -143,6 +143,12 @@ with col2:
     st.metric("Valor Total em Vendas", format_currency(valor_total))
 
 with col3:
+    # Calcular taxa house (% de vendas internas)
+    vendas_internas = len(df_filtrado[(df_filtrado['situacao'] == 'Vendida') & (df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)')])
+    taxa_house = (vendas_internas / total_vendas * 100) if total_vendas > 0 else 0
+    st.metric("Taxa House", f"{taxa_house:.1f}%")
+
+with col4:
     tempo_medio_geral = int(df_filtrado['tempo_ate_venda'].mean().round(0))
     st.metric("Tempo Médio até Venda", f"{tempo_medio_geral} dias")
 
