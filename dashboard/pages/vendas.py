@@ -152,6 +152,8 @@ with col4:
     tempo_medio_geral = int(df_filtrado['tempo_ate_venda'].mean().round(0))
     st.metric("Tempo Médio até Venda", f"{tempo_medio_geral} dias")
 
+st.divider()
+
 # Análise por tipo de venda (Interna vs Externa)
 st.subheader("Análise por Origem da Venda")
 
@@ -169,6 +171,8 @@ analise_origem['Valor Total'] = analise_origem['Valor Total'].apply(format_curre
 analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].round(0).astype(int)
 
 st.table(analise_origem)
+
+st.divider()
 
 # Análise estratificada por empreendimento e tipo de venda
 st.subheader("Estratificação por Tipo de Venda")
@@ -233,6 +237,8 @@ estratificacao = pd.concat([estratificacao, totais], ignore_index=True)
 estratificacao = estratificacao.copy()
 
 st.table(estratificacao)
+
+st.divider()
 
 # Análise de conversão de reservas em vendas
 st.subheader("Taxa de Conversão de Reservas em Vendas")
