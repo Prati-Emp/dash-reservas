@@ -122,21 +122,24 @@ df_filtrado = reservas_df[
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    total_vendas = len(df_filtrado)
+    total_vendas = len(df_filtrado[df_filtrado['situacao'] == 'Vendida'])
     st.metric("Total de Vendas", f"{total_vendas:,}")
 
 with col2:
-    valor_total = df_filtrado['valor_contrato'].sum()
+    valor_total = df_filtrado[df_filtrado['situacao'] == 'Vendida']['valor_contrato'].sum()
     st.metric("Valor Total em Vendas", format_currency(valor_total))
 
 with col3:
-    tempo_medio_geral = df_filtrado['tempo_ate_venda'].mean()
-    st.metric("Tempo Médio até Venda", f"{tempo_medio_geral:.1f} dias")
+    tempo_medio_geral = int(df_filtrado['tempo_ate_venda'].mean().round(0))
+    st.metric("Tempo Médio até Venda", f"{tempo_medio_geral} dias")
 
 # Análise por tipo de venda (Interna vs Externa)
 st.subheader("Análise por Origem da Venda")
 
-analise_origem = df_filtrado.groupby('tipo_venda_origem').agg({
+# Filtrar apenas vendas efetivas
+df_vendas = df_filtrado[df_filtrado['situacao'] == 'Vendida']
+
+analise_origem = df_vendas.groupby('tipo_venda_origem').agg({
     'idreserva': 'count',
     'valor_contrato': 'sum',
     'tempo_ate_venda': 'mean'
@@ -144,7 +147,7 @@ analise_origem = df_filtrado.groupby('tipo_venda_origem').agg({
 
 analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total', 'Tempo Médio (dias)']
 analise_origem['Valor Total'] = analise_origem['Valor Total'].apply(format_currency)
-analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].round(1)
+analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].round(0).astype(int)
 
 st.table(analise_origem)
 
@@ -152,7 +155,10 @@ st.table(analise_origem)
 st.subheader("Estratificação por Tipo de Venda")
 
 # Criar DataFrames separados para cada métrica
-quantidade = df_filtrado.pivot_table(
+# Usar apenas vendas efetivas
+df_vendas = df_filtrado[df_filtrado['situacao'] == 'Vendida']
+
+quantidade = df_vendas.pivot_table(
     index='empreendimento',
     columns='tipo_venda_origem',
     values='idreserva',
@@ -160,7 +166,7 @@ quantidade = df_filtrado.pivot_table(
     fill_value=0
 ).reset_index()
 
-valor = df_filtrado.pivot_table(
+valor = df_vendas.pivot_table(
     index='empreendimento',
     columns='tipo_venda_origem',
     values='valor_contrato',
@@ -168,7 +174,7 @@ valor = df_filtrado.pivot_table(
     fill_value=0
 ).reset_index()
 
-tempo = df_filtrado.pivot_table(
+tempo = df_vendas.pivot_table(
     index='empreendimento',
     columns='tipo_venda_origem',
     values='tempo_ate_venda',
@@ -189,26 +195,23 @@ estratificacao['Tempo Médio (Externa)'] = tempo['Venda Externa (Imobiliárias)'
 # Formatar valores
 estratificacao['Valor Total (Interna)'] = estratificacao['Valor Total (Interna)'].apply(format_currency)
 estratificacao['Valor Total (Externa)'] = estratificacao['Valor Total (Externa)'].apply(format_currency)
-estratificacao['Tempo Médio (Interna)'] = estratificacao['Tempo Médio (Interna)'].round(1)
-estratificacao['Tempo Médio (Externa)'] = estratificacao['Tempo Médio (Externa)'].round(1)
+estratificacao['Tempo Médio (Interna)'] = estratificacao['Tempo Médio (Interna)'].round(0).astype(int)
+estratificacao['Tempo Médio (Externa)'] = estratificacao['Tempo Médio (Externa)'].round(0).astype(int)
 
 # Calcular e adicionar linha de totais
 totais = pd.DataFrame([{
     'Empreendimento': 'Total',
-    'Quantidade (Interna)': df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)']['idreserva'].count(),
-    'Quantidade (Externa)': df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['idreserva'].count(),
-    'Valor Total (Interna)': format_currency(df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)']['valor_contrato'].sum()),
-    'Valor Total (Externa)': format_currency(df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['valor_contrato'].sum()),
-    'Tempo Médio (Interna)': df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)']['tempo_ate_venda'].mean().round(1),
-    'Tempo Médio (Externa)': df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['tempo_ate_venda'].mean().round(1)
+    'Quantidade (Interna)': df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Interna (Prati)']['idreserva'].count(),
+    'Quantidade (Externa)': df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['idreserva'].count(),
+    'Valor Total (Interna)': format_currency(df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Interna (Prati)']['valor_contrato'].sum()),
+    'Valor Total (Externa)': format_currency(df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['valor_contrato'].sum()),'Tempo Médio (Interna)': int(df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)']['tempo_ate_venda'].mean().round(0)),
+    'Tempo Médio (Externa)': int(df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['tempo_ate_venda'].mean().round(0))
 }])
 
 estratificacao = pd.concat([estratificacao, totais], ignore_index=True)
 
-# Ordenar por quantidade total (soma de internas e externas)
-estratificacao['Total Vendas'] = estratificacao['Quantidade (Interna)'] + estratificacao['Quantidade (Externa)']
-estratificacao = estratificacao.sort_values('Total Vendas', ascending=False)
-estratificacao = estratificacao.drop('Total Vendas', axis=1)
+# Remover a ordenação para manter a ordem original dos empreendimentos
+estratificacao = estratificacao.copy()
 
 st.table(estratificacao)
 
