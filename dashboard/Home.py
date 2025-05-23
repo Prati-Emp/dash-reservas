@@ -145,7 +145,6 @@ def get_motherduck_connection():
     """Create a cached connection to MotherDuck"""
     try:        
         token = os.getenv('MOTHERDUCK_TOKEN')
-        st.write("Token encontrado:", "Sim" if token else "Não")
         
         if not token:
             load_dotenv(override=True)
