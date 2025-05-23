@@ -69,11 +69,10 @@ def get_motherduck_connection():
 def load_data():
     conn = get_motherduck_connection()
     
-    # Buscar apenas reservas vendidas
+    # Buscar todas as reservas
     reservas_df = conn.sql("""
         SELECT *
         FROM reservas.main.reservas_abril
-        WHERE situacao = 'Vendida'
     """).df()
     
     # Converter colunas de data
@@ -149,51 +148,102 @@ analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].ro
 
 st.table(analise_origem)
 
-# Gráfico de distribuição de vendas
-st.subheader("Distribuição de Vendas por Origem")
+# Análise estratificada por empreendimento e tipo de venda
+st.subheader("Estratificação por Tipo de Venda")
 
-fig = px.pie(df_filtrado, 
-             names='tipo_venda_origem', 
-             values='valor_contrato',
-             title='Distribuição do Valor Total de Vendas por Origem')
-st.plotly_chart(fig, use_container_width=True)
+# Criar DataFrames separados para cada métrica
+quantidade = df_filtrado.pivot_table(
+    index='empreendimento',
+    columns='tipo_venda_origem',
+    values='idreserva',
+    aggfunc='count',
+    fill_value=0
+).reset_index()
 
-# Tempo médio de vendas por tipo
-st.subheader("Tempo Médio até a Venda por Origem")
+valor = df_filtrado.pivot_table(
+    index='empreendimento',
+    columns='tipo_venda_origem',
+    values='valor_contrato',
+    aggfunc='sum',
+    fill_value=0
+).reset_index()
 
-fig_tempo = px.bar(analise_origem, 
-                  x='Origem', 
-                  y='Tempo Médio (dias)',
-                  text='Tempo Médio (dias)')
-fig_tempo.update_traces(texttemplate='%{text:.1f} dias', textposition='outside')
-st.plotly_chart(fig_tempo, use_container_width=True)
+tempo = df_filtrado.pivot_table(
+    index='empreendimento',
+    columns='tipo_venda_origem',
+    values='tempo_ate_venda',
+    aggfunc='mean',
+    fill_value=0
+).reset_index()
 
-# Análise detalhada por imobiliária
-st.subheader("Análise por Imobiliária")
+# Criar DataFrame final
+estratificacao = pd.DataFrame()
+estratificacao['Empreendimento'] = quantidade['empreendimento']
+estratificacao['Quantidade (Interna)'] = quantidade['Venda Interna (Prati)']
+estratificacao['Quantidade (Externa)'] = quantidade['Venda Externa (Imobiliárias)']
+estratificacao['Valor Total (Interna)'] = valor['Venda Interna (Prati)']
+estratificacao['Valor Total (Externa)'] = valor['Venda Externa (Imobiliárias)']
+estratificacao['Tempo Médio (Interna)'] = tempo['Venda Interna (Prati)']
+estratificacao['Tempo Médio (Externa)'] = tempo['Venda Externa (Imobiliárias)']
 
-analise_imobiliaria = df_filtrado.groupby('imobiliaria').agg({
-    'idreserva': 'count',
-    'valor_contrato': 'sum',
-    'tempo_ate_venda': 'mean'
-}).reset_index()
+# Formatar valores
+estratificacao['Valor Total (Interna)'] = estratificacao['Valor Total (Interna)'].apply(format_currency)
+estratificacao['Valor Total (Externa)'] = estratificacao['Valor Total (Externa)'].apply(format_currency)
+estratificacao['Tempo Médio (Interna)'] = estratificacao['Tempo Médio (Interna)'].round(1)
+estratificacao['Tempo Médio (Externa)'] = estratificacao['Tempo Médio (Externa)'].round(1)
 
-analise_imobiliaria.columns = ['Imobiliária', 'Quantidade', 'Valor Total', 'Tempo Médio (dias)']
-analise_imobiliaria['Valor Total'] = analise_imobiliaria['Valor Total'].apply(format_currency)
-analise_imobiliaria['Tempo Médio (dias)'] = analise_imobiliaria['Tempo Médio (dias)'].round(1)
-analise_imobiliaria = analise_imobiliaria.sort_values('Quantidade', ascending=False)
+# Calcular e adicionar linha de totais
+totais = pd.DataFrame([{
+    'Empreendimento': 'Total',
+    'Quantidade (Interna)': df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)']['idreserva'].count(),
+    'Quantidade (Externa)': df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['idreserva'].count(),
+    'Valor Total (Interna)': format_currency(df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)']['valor_contrato'].sum()),
+    'Valor Total (Externa)': format_currency(df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['valor_contrato'].sum()),
+    'Tempo Médio (Interna)': df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)']['tempo_ate_venda'].mean().round(1),
+    'Tempo Médio (Externa)': df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['tempo_ate_venda'].mean().round(1)
+}])
 
-st.table(analise_imobiliaria)
+estratificacao = pd.concat([estratificacao, totais], ignore_index=True)
 
-# Análise de desempenho mensal
-st.subheader("Desempenho Mensal")
+# Ordenar por quantidade total (soma de internas e externas)
+estratificacao['Total Vendas'] = estratificacao['Quantidade (Interna)'] + estratificacao['Quantidade (Externa)']
+estratificacao = estratificacao.sort_values('Total Vendas', ascending=False)
+estratificacao = estratificacao.drop('Total Vendas', axis=1)
 
-df_filtrado['mes_venda'] = df_filtrado['data_ultima_alteracao_situacao'].dt.strftime('%Y-%m')
-vendas_mensais = df_filtrado.groupby('mes_venda').agg({
-    'idreserva': 'count',
-    'valor_contrato': 'sum'
-}).reset_index()
+st.table(estratificacao)
 
-vendas_mensais.columns = ['Mês', 'Quantidade', 'Valor Total']
-vendas_mensais['Valor Total'] = vendas_mensais['Valor Total'].apply(format_currency)
+# Análise de conversão de reservas em vendas
+st.subheader("Taxa de Conversão de Reservas em Vendas")
 
-st.table(vendas_mensais)
+# Calcular taxas de conversão para vendas internas e externas
+def calcular_taxa_conversao(df, tipo_venda):
+    total_reservas = len(df[df['tipo_venda_origem'] == tipo_venda])
+    total_vendas = len(df[(df['tipo_venda_origem'] == tipo_venda) & (df['situacao'] == 'Vendida')])
+    taxa = (total_vendas / total_reservas * 100) if total_reservas > 0 else 0
+    return pd.Series({
+        'Total Reservas': total_reservas,
+        'Total Vendas': total_vendas,
+        'Taxa de Conversão': taxa
+    })
+
+# Criar DataFrame de conversão
+conversao_interna = calcular_taxa_conversao(df_filtrado, 'Venda Interna (Prati)')
+conversao_externa = calcular_taxa_conversao(df_filtrado, 'Venda Externa (Imobiliárias)')
+
+conversao_df = pd.DataFrame({
+    'Métricas': ['Total Reservas', 'Total Vendas', 'Taxa de Conversão'],
+    'Venda Interna': [
+        f"{conversao_interna['Total Reservas']:,}",
+        f"{conversao_interna['Total Vendas']:,}",
+        f"{conversao_interna['Taxa de Conversão']:.1f}%"
+    ],
+    'Venda Externa': [
+        f"{conversao_externa['Total Reservas']:,}",
+        f"{conversao_externa['Total Vendas']:,}",
+        f"{conversao_externa['Taxa de Conversão']:.1f}%"
+    ]
+})
+
+st.table(conversao_df)
+
+
