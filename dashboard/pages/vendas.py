@@ -117,11 +117,19 @@ data_fim = st.sidebar.date_input(
     max_value=max(reservas_df['data_cad'].dt.date)
 )
 
-# Aplicar filtros de data
+# Filtro de empreendimento
+empreendimentos = sorted(reservas_df['empreendimento'].unique())
+empreendimento_selecionado = st.sidebar.selectbox("Empreendimento", ["Todos"] + list(empreendimentos))
+
+# Aplicar filtros
 df_filtrado = reservas_df[
     (reservas_df['data_cad'].dt.date >= data_inicio) & 
     (reservas_df['data_cad'].dt.date <= data_fim)
 ].copy()
+
+# Aplicar filtro de empreendimento se selecionado
+if empreendimento_selecionado != "Todos":
+    df_filtrado = df_filtrado[df_filtrado['empreendimento'] == empreendimento_selecionado]
 
 # Métricas principais
 col1, col2, col3 = st.columns(3)
