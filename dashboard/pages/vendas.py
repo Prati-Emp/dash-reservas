@@ -33,9 +33,14 @@ except locale.Error:
             pass
 
 def format_currency(value):
-    """Format currency value to Brazilian Real format"""
+    """Format currency value to Brazilian Real format with MI (millions) or MIL (thousands)"""
     try:
-        return f"R$ {value:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        if value >= 1_000_000:  # Se for 1 milhão ou mais
+            return f"R$ {value/1_000_000:.1f}Mi".replace(".", ",")
+        elif value >= 1_000:  # Se for 1 mil ou mais
+            return f"R$ {value/1_000:.1f}Mil".replace(".", ",")
+        else:
+            return f"R$ {value:.1f}".replace(".", ",")
     except:
         return f"R$ {value}"
 
