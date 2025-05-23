@@ -267,17 +267,17 @@ reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
 # Calcular "Dentro do Prazo"
 reservas_por_situacao['Dentro do Prazo'] = reservas_por_situacao['Quantidade'] - reservas_por_situacao['Fora do Prazo']
 
-# Reordenar as colunas e renomear para title case
-reservas_por_situacao = reservas_por_situacao[['Situação', 'Dentro Do Prazo', 'Fora Do Prazo', 'Tempo Médio', 'Quantidade']]
-reservas_por_situacao = reservas_por_situacao.rename(columns={'Tempo Médio': 'Tempo Médio (Dias)'})
+
+# Reordenar as colunas mantendo os nomes originais exatos
+reservas_por_situacao = reservas_por_situacao[['Situação', 'Quantidade', 'Fora do Prazo', 'Tempo Médio', 'Dentro do Prazo']]
 
 # Adicionar linha de totais
 totais = pd.DataFrame([{
     'Situação': 'Total',
-    'Dentro do Prazo': reservas_por_situacao['Dentro do Prazo'].sum(),
+    'Quantidade': reservas_por_situacao['Quantidade'].sum(),
     'Fora do Prazo': reservas_por_situacao['Fora do Prazo'].sum(),
-    'Tempo Médio (dias)': round(reservas_por_situacao['Tempo Médio (dias)'].mean()),
-    'Quantidade': reservas_por_situacao['Quantidade'].sum()
+    'Tempo Médio': round(reservas_por_situacao['Tempo Médio'].mean()),
+    'Dentro do Prazo': reservas_por_situacao['Dentro do Prazo'].sum()
 }])
 
 reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=True)
@@ -314,17 +314,16 @@ reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento.apply
 # Calcular "Dentro do Prazo"
 reservas_por_empreendimento['Dentro do Prazo'] = reservas_por_empreendimento['Quantidade'] - reservas_por_empreendimento['Fora do Prazo']
 
-# Reordenar as colunas e renomear para title case
-reservas_por_empreendimento = reservas_por_empreendimento[['Empreendimento', 'Dentro Do Prazo', 'Fora Do Prazo', 'Tempo Médio', 'Quantidade']]
-reservas_por_empreendimento = reservas_por_empreendimento.rename(columns={'Tempo Médio': 'Tempo Médio (Dias)'})
+# Reordenar as colunas mantendo os nomes originais exatos
+reservas_por_empreendimento = reservas_por_empreendimento[['Empreendimento', 'Quantidade', 'Fora do Prazo', 'Tempo Médio', 'Dentro do Prazo']]
 
 # Adicionar linha de totais
 totais_empreendimento = pd.DataFrame([{
     'Empreendimento': 'Total',
-    'Dentro do Prazo': reservas_por_empreendimento['Dentro do Prazo'].sum(),
+    'Quantidade': reservas_por_empreendimento['Quantidade'].sum(),
     'Fora do Prazo': reservas_por_empreendimento['Fora do Prazo'].sum(),
-    'Tempo Médio (dias)': round(reservas_por_empreendimento['Tempo Médio (dias)'].mean()),
-    'Quantidade': reservas_por_empreendimento['Quantidade'].sum()
+    'Tempo Médio': round(reservas_por_empreendimento['Tempo Médio'].mean()),
+    'Dentro do Prazo': reservas_por_empreendimento['Dentro do Prazo'].sum()
 }])
 
 reservas_por_empreendimento = pd.concat([reservas_por_empreendimento, totais_empreendimento], ignore_index=True)

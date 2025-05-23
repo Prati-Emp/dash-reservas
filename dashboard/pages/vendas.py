@@ -150,7 +150,7 @@ with col3:
 
 with col4:
     tempo_medio_geral = int(df_filtrado['tempo_ate_venda'].mean().round(0))
-    st.metric("Tempo Médio até Venda", f"{tempo_medio_geral} dias")
+    st.metric("Tempo Médio até a Venda", f"{tempo_medio_geral} dias")
 
 st.divider()
 
