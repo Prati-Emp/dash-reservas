@@ -11,11 +11,16 @@ import duckdb
 from dotenv import load_dotenv
 import os
 
+
 # Configuração da página
 st.set_page_config(page_title="Análise de Vendas", layout="wide")
 
-# Mostrar logo
-display_logo()
+# Display navigation bar (includes logo)
+from utils import display_navigation
+display_navigation()
+
+# Store current page in session state
+st.session_state['current_page'] = __file__
 
 # Carregar variáveis de ambiente
 load_dotenv()

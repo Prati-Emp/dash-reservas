@@ -9,9 +9,12 @@ def get_logo_path():
 # Configuração da página
 st.set_page_config(page_title="Relatório de Reservas", layout="wide")
 
-from utils import display_logo
-# Mostrar logo
-display_logo()
+from utils import display_navigation
+# Display navigation bar (includes logo)
+display_navigation()
+
+# Store current page in session state
+st.session_state['current_page'] = __file__
 
 import pandas as pd
 from datetime import datetime
