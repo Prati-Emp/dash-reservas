@@ -74,10 +74,12 @@ def get_motherduck_connection():
 def load_data():
     conn = get_motherduck_connection()
     
-    # Buscar todas as reservas
+    # Buscar todas as reservas com tipo de venda
     reservas_df = conn.sql("""
-        SELECT *
-        FROM reservas.main.reservas_abril
+        SELECT 
+            r.*,
+            COALESCE(r.tipovenda, 'Outros') as tipo_venda
+        FROM reservas.main.reservas_abril r
     """).df()
     
     # Converter colunas de data
@@ -121,6 +123,10 @@ data_fim = st.sidebar.date_input(
 empreendimentos = sorted(reservas_df['empreendimento'].unique())
 empreendimento_selecionado = st.sidebar.selectbox("Empreendimento", ["Todos"] + list(empreendimentos))
 
+# Filtro de tipo de venda
+tipos_venda = sorted(reservas_df['tipo_venda'].unique())
+tipo_venda_selecionado = st.sidebar.selectbox("Tipo de Venda", ["Todos"] + list(tipos_venda))
+
 # Aplicar filtros
 df_filtrado = reservas_df[
     (reservas_df['data_cad'].dt.date >= data_inicio) & 
@@ -130,6 +136,10 @@ df_filtrado = reservas_df[
 # Aplicar filtro de empreendimento se selecionado
 if empreendimento_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado['empreendimento'] == empreendimento_selecionado]
+
+# Aplicar filtro de tipo de venda se selecionado
+if tipo_venda_selecionado != "Todos":
+    df_filtrado = df_filtrado[df_filtrado['tipo_venda'] == tipo_venda_selecionado]
 
 # Métricas principais
 col1, col2, col3, col4 = st.columns(4)
