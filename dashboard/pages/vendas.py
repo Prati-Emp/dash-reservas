@@ -146,6 +146,22 @@ if empreendimento_selecionado != "Todos":
 if tipo_venda_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado['tipo_venda'] == tipo_venda_selecionado]
 
+# Calcular dados do mês anterior
+data_inicio_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(months=1)
+data_fim_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(days=1)
+
+# Filtrar dados do mês anterior
+df_mes_anterior = reservas_df[
+    (reservas_df['data_cad'].dt.date >= data_inicio_mes_anterior.date()) & 
+    (reservas_df['data_cad'].dt.date <= data_fim_mes_anterior.date())
+]
+
+# Aplicar os mesmos filtros do mês atual ao mês anterior
+if empreendimento_selecionado != "Todos":
+    df_mes_anterior = df_mes_anterior[df_mes_anterior['empreendimento'] == empreendimento_selecionado]
+if tipo_venda_selecionado != "Todos":
+    df_mes_anterior = df_mes_anterior[df_mes_anterior['tipo_venda'] == tipo_venda_selecionado]
+
 # Métricas principais
 col1, col2, col3, col4 = st.columns(4)
 
@@ -154,14 +170,38 @@ with col1:
     st.metric("Total de Vendas", f"{total_vendas:,}")
 
 with col2:
+    # Valor total atual
     valor_total = df_filtrado[df_filtrado['situacao'] == 'Vendida']['valor_contrato'].sum()
-    st.metric("Valor Total em Vendas", format_currency(valor_total))
+    # Valor total mês anterior
+    valor_total_anterior = df_mes_anterior[df_mes_anterior['situacao'] == 'Vendida']['valor_contrato'].sum()
+    # Calcular variação percentual do valor
+    if valor_total_anterior > 0:
+        variacao_valor = ((valor_total - valor_total_anterior) / valor_total_anterior) * 100
+    else:
+        variacao_valor = 100 if valor_total > 0 else 0
+        
+    st.metric(
+        "Valor Total em Vendas",
+        format_currency(valor_total),
+        f"{variacao_valor:+.1f}% vs mês anterior"
+    )
 
 with col3:
-    # Calcular taxa house (% de vendas internas)
+    # Taxa house atual
     vendas_internas = len(df_filtrado[(df_filtrado['situacao'] == 'Vendida') & (df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)')])
     taxa_house = (vendas_internas / total_vendas * 100) if total_vendas > 0 else 0
-    st.metric("Taxa House", f"{taxa_house:.1f}%")
+    
+    # Taxa house mês anterior
+    vendas_internas_anterior = len(df_mes_anterior[(df_mes_anterior['situacao'] == 'Vendida') & (df_mes_anterior['tipo_venda_origem'] == 'Venda Interna (Prati)')])
+    total_vendas_anterior = len(df_mes_anterior[df_mes_anterior['situacao'] == 'Vendida'])
+    taxa_house_anterior = (vendas_internas_anterior / total_vendas_anterior * 100) if total_vendas_anterior > 0 else 0
+      # Calcular variação em pontos percentuais
+    variacao_taxa = taxa_house - taxa_house_anterior
+    st.metric(
+        "Taxa House",
+        f"{taxa_house:.1f}%",
+        f"{variacao_taxa:+.1f}% vs mês anterior"
+    )
 
 with col4:
     tempo_medio_geral = int(df_filtrado['tempo_ate_venda'].mean().round(0))
