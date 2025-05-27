@@ -20,7 +20,7 @@ from utils import display_navigation
 display_navigation()
 
 # Store current page in session state
-st.session_state['current_page'] = __file__
+st.session_state['current_page'] = "pages/Vendas.py"
 
 # Carregar variáveis de ambiente
 load_dotenv()

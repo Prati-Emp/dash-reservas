@@ -2,7 +2,8 @@ import streamlit as st
 import os
 
 def display_navigation():
-    """Display a horizontal navigation bar at the top of the page"""    # Custom CSS for the navigation bar
+    """Display a horizontal navigation bar at the top of the page"""
+    # Custom CSS for the navigation bar
     st.markdown("""
         <style>
         .stButton button {
