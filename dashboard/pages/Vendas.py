@@ -77,18 +77,22 @@ def get_motherduck_connection():
 @st.cache_data
 def load_data():
     conn = get_motherduck_connection()
-    
-    # Buscar todas as reservas com tipo de venda
+      # Buscar todas as reservas com tipo de venda
     reservas_df = conn.sql("""
         SELECT 
             r.*,
-            COALESCE(r.tipovenda, 'Outros') as tipo_venda
+            COALESCE(r.tipovenda, 'Outros') as tipo_venda,
+            CASE 
+                WHEN r.situacao = 'Vendida' THEN r.data_ultima_alteracao_situacao
+                ELSE NULL 
+            END as data_venda
         FROM reservas.main.reservas_abril r
     """).df()
     
     # Converter colunas de data
     reservas_df['data_cad'] = pd.to_datetime(reservas_df['data_cad'])
     reservas_df['data_ultima_alteracao_situacao'] = pd.to_datetime(reservas_df['data_ultima_alteracao_situacao'])
+    reservas_df['data_venda'] = pd.to_datetime(reservas_df['data_venda'])
     
     # Calcular tempo até a venda (em dias)
     reservas_df['tempo_ate_venda'] = (reservas_df['data_ultima_alteracao_situacao'] - reservas_df['data_cad']).dt.days
@@ -109,18 +113,19 @@ reservas_df = load_data()
 # Sidebar para filtros
 st.sidebar.header("Filtros")
 
-# Filtro de data
+# Filtro de data - usar data_venda para vendas
+vendas_datas = reservas_df[reservas_df['situacao'] == 'Vendida']['data_venda'].dropna()
 data_inicio = st.sidebar.date_input(
     "Data Inicial",
     value=pd.Timestamp('2025-01-01'),
-    min_value=min(reservas_df['data_cad'].dt.date),
-    max_value=max(reservas_df['data_cad'].dt.date)
+    min_value=min(vendas_datas.dt.date),
+    max_value=max(vendas_datas.dt.date)
 )
 data_fim = st.sidebar.date_input(
     "Data Final",
-    value=max(reservas_df['data_cad'].dt.date),
-    min_value=min(reservas_df['data_cad'].dt.date),
-    max_value=max(reservas_df['data_cad'].dt.date)
+    value=max(vendas_datas.dt.date),
+    min_value=min(vendas_datas.dt.date),
+    max_value=max(vendas_datas.dt.date)
 )
 
 # Filtro de empreendimento
@@ -131,11 +136,8 @@ empreendimento_selecionado = st.sidebar.selectbox("Empreendimento", ["Todos"] + 
 tipos_venda = sorted(reservas_df['tipo_venda'].unique())
 tipo_venda_selecionado = st.sidebar.selectbox("Tipo de Venda", ["Todos"] + list(tipos_venda))
 
-# Aplicar filtros
-df_filtrado = reservas_df[
-    (reservas_df['data_cad'].dt.date >= data_inicio) & 
-    (reservas_df['data_cad'].dt.date <= data_fim)
-].copy()
+# Aplicar filtros básicos (não relacionados à data)
+df_filtrado = reservas_df.copy()
 
 # Aplicar filtro de empreendimento se selecionado
 if empreendimento_selecionado != "Todos":
@@ -145,15 +147,43 @@ if empreendimento_selecionado != "Todos":
 if tipo_venda_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado['tipo_venda'] == tipo_venda_selecionado]
 
+# Para vendas, usar data_venda no filtro
+vendas_filtradas = df_filtrado[
+    (df_filtrado['situacao'] == 'Vendida') & 
+    (df_filtrado['data_venda'].dt.date >= data_inicio) & 
+    (df_filtrado['data_venda'].dt.date <= data_fim)
+]
+
+# Para outras situações, manter o filtro por data_cad
+outras_situacoes = df_filtrado[
+    (df_filtrado['situacao'] != 'Vendida') & 
+    (df_filtrado['data_cad'].dt.date >= data_inicio) & 
+    (df_filtrado['data_cad'].dt.date <= data_fim)
+]
+
+# Combinar os dataframes
+df_filtrado = pd.concat([vendas_filtradas, outras_situacoes])
+
 # Calcular dados do mês anterior
 data_inicio_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(months=1)
 data_fim_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(days=1)
 
-# Filtrar dados do mês anterior
-df_mes_anterior = reservas_df[
+# Filtrar vendas do mês anterior usando data_venda
+vendas_mes_anterior = reservas_df[
+    (reservas_df['situacao'] == 'Vendida') & 
+    (reservas_df['data_venda'].dt.date >= data_inicio_mes_anterior.date()) & 
+    (reservas_df['data_venda'].dt.date <= data_fim_mes_anterior.date())
+]
+
+# Filtrar outras situações do mês anterior usando data_cad
+outras_situacoes_mes_anterior = reservas_df[
+    (reservas_df['situacao'] != 'Vendida') & 
     (reservas_df['data_cad'].dt.date >= data_inicio_mes_anterior.date()) & 
     (reservas_df['data_cad'].dt.date <= data_fim_mes_anterior.date())
 ]
+
+# Combinar os dataframes do mês anterior
+df_mes_anterior = pd.concat([vendas_mes_anterior, outras_situacoes_mes_anterior])
 
 # Aplicar os mesmos filtros do mês atual ao mês anterior
 if empreendimento_selecionado != "Todos":
@@ -165,14 +195,31 @@ if tipo_venda_selecionado != "Todos":
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    total_vendas = len(df_filtrado[df_filtrado['situacao'] == 'Vendida'])
+    # Total de vendas no período usando data_venda
+    total_vendas = len(df_filtrado[
+        (df_filtrado['situacao'] == 'Vendida') & 
+        (df_filtrado['data_venda'].dt.date >= data_inicio) & 
+        (df_filtrado['data_venda'].dt.date <= data_fim)
+    ])
     st.metric("Total de Vendas", f"{total_vendas:,}")
 
 with col2:
-    # Valor total atual
-    valor_total = df_filtrado[df_filtrado['situacao'] == 'Vendida']['valor_contrato'].sum()
-    # Valor total mês anterior
-    valor_total_anterior = df_mes_anterior[df_mes_anterior['situacao'] == 'Vendida']['valor_contrato'].sum()
+    # Valor total atual usando data_venda
+    vendas_periodo = df_filtrado[
+        (df_filtrado['situacao'] == 'Vendida') & 
+        (df_filtrado['data_venda'].dt.date >= data_inicio) & 
+        (df_filtrado['data_venda'].dt.date <= data_fim)
+    ]
+    valor_total = vendas_periodo['valor_contrato'].sum()
+    
+    # Valor total mês anterior usando data_venda
+    vendas_anterior = df_mes_anterior[
+        (df_mes_anterior['situacao'] == 'Vendida') & 
+        (df_mes_anterior['data_venda'].dt.date >= data_inicio_mes_anterior.date()) & 
+        (df_mes_anterior['data_venda'].dt.date <= data_fim_mes_anterior.date())
+    ]
+    valor_total_anterior = vendas_anterior['valor_contrato'].sum()
+    
     # Calcular variação percentual do valor
     if valor_total_anterior > 0:
         variacao_valor = ((valor_total - valor_total_anterior) / valor_total_anterior) * 100
@@ -186,15 +233,27 @@ with col2:
     )
 
 with col3:
-    # Taxa house atual
-    vendas_internas = len(df_filtrado[(df_filtrado['situacao'] == 'Vendida') & (df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)')])
-    taxa_house = (vendas_internas / total_vendas * 100) if total_vendas > 0 else 0
+    # Taxa house atual (usando data_venda)
+    vendas_periodo = df_filtrado[
+        (df_filtrado['situacao'] == 'Vendida') & 
+        (df_filtrado['data_venda'].dt.date >= data_inicio) & 
+        (df_filtrado['data_venda'].dt.date <= data_fim)
+    ]
+    vendas_internas = len(vendas_periodo[vendas_periodo['tipo_venda_origem'] == 'Venda Interna (Prati)'])
+    total_vendas_periodo = len(vendas_periodo)
+    taxa_house = (vendas_internas / total_vendas_periodo * 100) if total_vendas_periodo > 0 else 0
     
-    # Taxa house mês anterior
-    vendas_internas_anterior = len(df_mes_anterior[(df_mes_anterior['situacao'] == 'Vendida') & (df_mes_anterior['tipo_venda_origem'] == 'Venda Interna (Prati)')])
-    total_vendas_anterior = len(df_mes_anterior[df_mes_anterior['situacao'] == 'Vendida'])
+    # Taxa house mês anterior (usando data_venda)
+    vendas_anterior = df_mes_anterior[
+        (df_mes_anterior['situacao'] == 'Vendida') & 
+        (df_mes_anterior['data_venda'].dt.date >= data_inicio_mes_anterior.date()) & 
+        (df_mes_anterior['data_venda'].dt.date <= data_fim_mes_anterior.date())
+    ]
+    vendas_internas_anterior = len(vendas_anterior[vendas_anterior['tipo_venda_origem'] == 'Venda Interna (Prati)'])
+    total_vendas_anterior = len(vendas_anterior)
     taxa_house_anterior = (vendas_internas_anterior / total_vendas_anterior * 100) if total_vendas_anterior > 0 else 0
-      # Calcular variação em pontos percentuais
+    
+    # Calcular variação em pontos percentuais
     variacao_taxa = taxa_house - taxa_house_anterior
     st.metric(
         "Taxa House",
@@ -203,7 +262,13 @@ with col3:
     )
 
 with col4:
-    tempo_medio_geral = int(df_filtrado['tempo_ate_venda'].mean().round(0))
+    # Tempo médio apenas das vendas do período
+    vendas_periodo = df_filtrado[
+        (df_filtrado['situacao'] == 'Vendida') & 
+        (df_filtrado['data_venda'].dt.date >= data_inicio) & 
+        (df_filtrado['data_venda'].dt.date <= data_fim)
+    ]
+    tempo_medio_geral = int(vendas_periodo['tempo_ate_venda'].mean().round(0))
     st.metric("Tempo Médio até a Venda", f"{tempo_medio_geral} dias")
 
 st.divider()
@@ -298,9 +363,24 @@ st.divider()
 st.subheader("Taxa de Conversão de Reservas em Vendas")
 
 # Calcular taxas de conversão para vendas internas e externas
-def calcular_taxa_conversao(df, tipo_venda):
-    total_reservas = len(df[df['tipo_venda_origem'] == tipo_venda])
-    total_vendas = len(df[(df['tipo_venda_origem'] == tipo_venda) & (df['situacao'] == 'Vendida')])
+def calcular_taxa_conversao(df, df_reservas, tipo_venda, data_inicio, data_fim):
+    # Total de reservas no período
+    reservas_periodo = df_reservas[
+        (df_reservas['tipo_venda_origem'] == tipo_venda) &
+        (df_reservas['data_cad'].dt.date >= data_inicio) &
+        (df_reservas['data_cad'].dt.date <= data_fim)
+    ]
+    total_reservas = len(reservas_periodo)
+    
+    # Total de vendas no período (usando data_venda)
+    vendas_periodo = df[
+        (df['tipo_venda_origem'] == tipo_venda) &
+        (df['situacao'] == 'Vendida') &
+        (df['data_venda'].dt.date >= data_inicio) &
+        (df['data_venda'].dt.date <= data_fim)
+    ]
+    total_vendas = len(vendas_periodo)
+    
     taxa = (total_vendas / total_reservas * 100) if total_reservas > 0 else 0
     return pd.Series({
         'Total Reservas': total_reservas,
@@ -308,9 +388,9 @@ def calcular_taxa_conversao(df, tipo_venda):
         'Taxa de Conversão': taxa
     })
 
-# Criar DataFrame de conversão
-conversao_interna = calcular_taxa_conversao(df_filtrado, 'Venda Interna (Prati)')
-conversao_externa = calcular_taxa_conversao(df_filtrado, 'Venda Externa (Imobiliárias)')
+# Criar DataFrame de conversão usando data_venda para o período
+conversao_interna = calcular_taxa_conversao(df_filtrado, reservas_df, 'Venda Interna (Prati)', data_inicio, data_fim)
+conversao_externa = calcular_taxa_conversao(df_filtrado, reservas_df, 'Venda Externa (Imobiliárias)', data_inicio, data_fim)
 
 conversao_df = pd.DataFrame({
     'Métricas': ['Total Reservas', 'Total Vendas', 'Taxa de Conversão'],
