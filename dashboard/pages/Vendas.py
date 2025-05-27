@@ -2,7 +2,7 @@ import streamlit as st
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
-from utils import display_logo
+from utils import display_navigation
 import pandas as pd
 from datetime import datetime
 import plotly.express as px
@@ -16,7 +16,6 @@ import os
 st.set_page_config(page_title="Análise de Vendas", layout="wide")
 
 # Display navigation bar (includes logo)
-from utils import display_navigation
 display_navigation()
 
 # Store current page in session state

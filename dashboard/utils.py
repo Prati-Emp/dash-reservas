@@ -33,16 +33,15 @@ def display_navigation():
         
         # Get current page name
         current_page = os.path.basename(st.session_state.get('current_page', 'Home.py'))
-        
-        # Navigation buttons
+          # Navigation buttons
         with cols[0]:
             if st.button("Home", use_container_width=True):
                 st.switch_page("Home.py")
         with cols[1]:
             if st.button("Vendas", use_container_width=True):
-                st.switch_page("pages/vendas.py")
+                st.switch_page("pages/Vendas.py")
         with cols[2]:
-            if st.button("Imobiliaria", use_container_width=True):
+            if st.button("Imobiliária", use_container_width=True):
                 st.switch_page("pages/Imobiliaria.py")
         with cols[3]:
             if st.button("Motivo fora do prazo", use_container_width=True):
