@@ -11,6 +11,8 @@ USER_ID_TO_NAME = {
     "240": "Alana Konzen (Corretor)",
     "282": "Gabriela Vettorello (Corretor)",
     "80": "José Aquino (Gestor)",
+    "4": "Juliane Zwick(Correspondente)",
+    "5": "	Carine J.  Kaiser(Correspondente)"
 }
 
 import sys
@@ -295,21 +297,50 @@ for i in range(0, len(df_fora_prazo), 3):
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Situação:</strong> {row['situacao']}</p>
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Dias na Situação:</strong> {row['dias_na_situacao']}</p>
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Valor:</strong> {format_currency(row['valor_contrato'])}</p>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Imobiliária:</strong> {row['imobiliaria']}</p>
-                    </div>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Imobiliária:</strong> {row['imobiliaria']}</p>                    </div>
                 """, unsafe_allow_html=True)
                 
                 if messages:
                     with st.expander("Ver Mensagens"):
-                        for msg in messages:                            # Get user name from mapping or use original name
-                            user_id = str(msg.get('idusuario', ''))
+                        for msg in messages:
+                            # Get message content
                             mensagem = msg.get('mensagem', '')
                             
+                            # Check for special message case first
                             if mensagem.startswith("✅ Avaliação de Risco Pré Aprovada"):
                                 user_name = "Correspondente Bancario"
+                            else:                                # Try each user ID field in order
+                                user_id = None
+                                
+                                # Check idusuario first
+                                if msg.get('idusuario') is not None:
+                                    user_id = str(msg.get('idusuario'))
+                                # Then check idusuarioImobiliaria
+                                elif msg.get('idusuarioImobiliaria') is not None:
+                                    user_id = str(msg.get('idusuarioImobiliaria'))
+                                # Then check idcorretor
+                                elif msg.get('idcorretor') is not None:
+                                    user_id = str(msg.get('idcorretor'))
+                                # Finally check idusuarioCorrespondente
+                                elif msg.get('idusuarioCorrespondente') is not None:
+                                    user_id = str(msg.get('idusuarioCorrespondente'))
+                                
+                                # If we found a user ID, try to map it, otherwise use default name
+                                if user_id and user_id in USER_ID_TO_NAME:
+                                    user_name = USER_ID_TO_NAME[user_id]
+                                else:
+                                    user_name = msg.get('usuario_nome', 'N/A')
+                              # Formatar a data
+                            data_mensagem = msg.get('dataCad', 'N/A')
+                            if data_mensagem != 'N/A':
+                                try:
+                                    # Converter a string para datetime e depois formatar
+                                    data_formatada = datetime.strptime(data_mensagem, '%Y-%m-%d %H:%M:%S').strftime('%d/%m/%Y')
+                                except:
+                                    data_formatada = data_mensagem
                             else:
-                                user_name = USER_ID_TO_NAME.get(user_id, msg.get('usuario_nome', 'N/A'))
-                            
+                                data_formatada = data_mensagem
+
                             st.markdown(f"""
                                 <div style="
                                     padding: 0.8rem;
@@ -319,7 +350,7 @@ for i in range(0, len(df_fora_prazo), 3):
                                     background-color: #f9fafb;
                                     color: #000000;
                                 ">
-                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Data:</strong> <span style="color: #000000;">{msg.get('dataCad', 'N/A')}</span></p>
+                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Data:</strong> <span style="color: #000000;">{data_formatada}</span></p>
                                     <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Usuário:</strong> <span style="color: #000000;">{user_name}</span></p>
                                     <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Mensagem:</strong> <span style="color: #000000;">{msg.get('mensagem', 'N/A')}</span></p>
                                 </div>
