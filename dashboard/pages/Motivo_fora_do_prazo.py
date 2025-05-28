@@ -3,6 +3,16 @@ import streamlit as st
 # Configuração da página
 st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
 
+# Dicionário de mapeamento de IDs de usuários para nomes
+USER_ID_TO_NAME = {
+    "129": "Djonathan Souza (Analista)",
+    "114": "Camila Novaes(Gestor)",
+    "157": "Marciane Ross (Corretor)",
+    "240": "Alana Konzen (Corretor)",
+    "282": "Gabriela Vettorello (Corretor)",
+    "80": "José Aquino (Gestor)",
+}
+
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -267,7 +277,15 @@ for i in range(0, len(df_fora_prazo), 3):
                 
                 if messages:
                     with st.expander("Ver Mensagens"):
-                        for msg in messages:
+                        for msg in messages:                            # Get user name from mapping or use original name
+                            user_id = str(msg.get('idusuario', ''))
+                            mensagem = msg.get('mensagem', '')
+                            
+                            if mensagem.startswith("✅ Avaliação de Risco Pré Aprovada"):
+                                user_name = "Correspondente Bancario"
+                            else:
+                                user_name = USER_ID_TO_NAME.get(user_id, msg.get('usuario_nome', 'N/A'))
+                            
                             st.markdown(f"""
                                 <div style="
                                     padding: 0.8rem;
@@ -278,7 +296,7 @@ for i in range(0, len(df_fora_prazo), 3):
                                     color: #000000;
                                 ">
                                     <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Data:</strong> <span style="color: #000000;">{msg.get('dataCad', 'N/A')}</span></p>
-                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Usuário:</strong> <span style="color: #000000;">{msg.get('usuario_nome', 'N/A')}</span></p>
+                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Usuário:</strong> <span style="color: #000000;">{user_name}</span></p>
                                     <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Mensagem:</strong> <span style="color: #000000;">{msg.get('mensagem', 'N/A')}</span></p>
                                 </div>
                             """, unsafe_allow_html=True)
