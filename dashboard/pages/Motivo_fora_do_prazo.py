@@ -6,7 +6,7 @@ st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
 # Dicionário de mapeamento de IDs de usuários para nomes
 USER_ID_TO_NAME = {
     "129": "Djonathan Souza (Analista)",
-    "114": "Camila Novaes(Gestor)",
+    "114": "Camila Novaes (Gestor)",
     "157": "Marciane Ross (Corretor)",
     "240": "Alana Konzen (Corretor)",
     "282": "Gabriela Vettorello (Corretor)",
