@@ -179,6 +179,19 @@ with col3:
 # Análise por situação
 st.subheader("Análise por Situação")
 
+# Definir ordem do funil de vendas
+ordem_situacoes = [
+    'Reserva (7)',
+    'Crédito (CEF) (3)',
+    'Negociação (5)',
+    'Mútuo',
+    'Análise Diretoria',
+    'Contrato - Elaboração',
+    'Contrato - Assinatura',
+    'Vendida',
+    'Distrato'
+]
+
 # Calcular tempo médio para todas as reservas por situação
 tempo_medio = df_sem_canceladas_vendidas.groupby('situacao')['dias_na_situacao'].mean().round(0).astype(int)
 
@@ -195,6 +208,13 @@ analise_situacao = analise_situacao.merge(
 )
 
 analise_situacao.columns = ['Situação', 'Quantidade', 'Valor Total', 'Tempo Médio']
+
+# Criar mapeamento para ordem
+ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
+analise_situacao['ordem'] = analise_situacao['Situação'].map(ordem_mapping)
+analise_situacao = analise_situacao.sort_values('ordem').drop('ordem', axis=1)
+
+# Formatar valor total
 analise_situacao['Valor Total'] = analise_situacao['Valor Total'].apply(format_currency)
 
 st.table(analise_situacao)

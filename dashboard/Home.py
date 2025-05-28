@@ -239,9 +239,27 @@ with col2:
 # Reservas por Situação
 st.subheader("Reservas Por Situação")
 
+# Definir ordem do funil de vendas
+ordem_situacoes = [
+    'Reserva (7)',
+    'Crédito (CEF) (3)',
+    'Negociação (5)',
+    'Mútuo',
+    'Análise Diretoria',
+    'Contrato - Elaboração',
+    'Contrato - Assinatura',
+    'Vendida',
+    'Distrato'
+]
+
 # Contar reservas por situação do df_filtrado
-quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]['situacao'].value_counts().reset_index()
+quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada'])]['situacao'].value_counts().reset_index()
 quantidade_por_situacao.columns = ['Situação', 'Quantidade']
+
+# Criar mapeamento para ordem
+ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
+quantidade_por_situacao['ordem'] = quantidade_por_situacao['Situação'].map(ordem_mapping)
+quantidade_por_situacao = quantidade_por_situacao.sort_values('ordem').drop('ordem', axis=1)
 
 # Verificar fora do prazo diretamente na tabela de reservas
 df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]
@@ -368,9 +386,47 @@ st.dataframe(
     use_container_width=True
 )
 
+st.divider()
+
 # Análise de workflow
-if st.checkbox("Mostrar Análise De Workflow"):
-    st.subheader("Análise De Workflow")
-    # Usar os dados filtrados diretamente da tabela de reservas
-    workflow_agregado = df_filtrado.groupby('situacao')['idreserva'].count().reset_index()
-    st.bar_chart(data=workflow_agregado, x='situacao', y='idreserva')
+st.subheader("Análise De Workflow")
+
+# Definir ordem do funil de vendas
+ordem_situacoes = [
+    'Reserva (7)',
+    'Crédito (CEF) (3)',
+    'Negociação (5)',
+    'Mútuo',
+    'Análise Diretoria',
+    'Contrato - Elaboração',
+    'Contrato - Assinatura',
+    'Vendida',
+    'Distrato'
+]
+
+# Criar DataFrame com a ordem correta
+workflow_agregado = df_filtrado.groupby('situacao')['idreserva'].count().reset_index()
+workflow_agregado.columns = ['situacao', 'quantidade']
+
+# Criar mapeamento para ordem
+ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
+workflow_agregado['ordem'] = workflow_agregado['situacao'].map(ordem_mapping)
+workflow_agregado = workflow_agregado.sort_values('ordem').drop('ordem', axis=1)
+
+# Criar gráfico com plotly express
+import plotly.express as px
+
+fig = px.bar(workflow_agregado, 
+             x='situacao', 
+             y='quantidade',
+             text='quantidade',
+             labels={'situacao': 'Situação', 'quantidade': 'Quantidade'},
+             category_orders={"situacao": ordem_situacoes})
+
+fig.update_layout(
+    xaxis_title="Situação",
+    yaxis_title="Quantidade",
+    showlegend=False
+)
+
+st.plotly_chart(fig, use_container_width=True)
