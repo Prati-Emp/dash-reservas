@@ -411,6 +411,10 @@ workflow_agregado.columns = ['situacao', 'quantidade']
 # Criar mapeamento para ordem
 ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
 workflow_agregado['ordem'] = workflow_agregado['situacao'].map(ordem_mapping)
+
+# Remover situações que não estão no mapeamento ou têm quantidade zero
+workflow_agregado = workflow_agregado.dropna(subset=['ordem'])  # Remove situações que não estão no mapeamento
+workflow_agregado = workflow_agregado[workflow_agregado['quantidade'] > 0]  # Remove situações com quantidade zero
 workflow_agregado = workflow_agregado.sort_values('ordem').drop('ordem', axis=1)
 
 # Criar gráfico com plotly express
@@ -421,7 +425,7 @@ fig = px.bar(workflow_agregado,
              y='quantidade',
              text='quantidade',
              labels={'situacao': 'Situação', 'quantidade': 'Quantidade'},
-             category_orders={"situacao": ordem_situacoes})
+             title='Análise do Funil de Vendas')
 
 fig.update_layout(
     xaxis_title="Situação",
@@ -430,3 +434,8 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+# Exibir tabela com os dados
+st.write("Detalhamento por Situação:")
+workflow_agregado.columns = ['Situação', 'Quantidade']
+st.table(workflow_agregado)

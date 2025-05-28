@@ -190,6 +190,19 @@ analise_imobiliaria['Valor Total'] = analise_imobiliaria['Valor Total'].apply(fo
 # Análise comparativa Prati vs Outras Imobiliárias
 st.subheader("Comparativo Prati vs Outras Imobiliárias")
 
+# Definir ordem do funil de vendas
+ordem_situacoes = [
+    'Reserva (7)',
+    'Crédito (CEF) (3)',
+    'Negociação (5)',
+    'Mútuo',
+    'Análise Diretoria',
+    'Contrato - Elaboração',
+    'Contrato - Assinatura',
+    'Vendida',
+    'Distrato'
+]
+
 # Separar dados Prati e outras imobiliárias
 df_prati = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['imobiliaria'].str.strip().str.upper() == 'PRATI EMPREENDIMENTOS']
 df_outras = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['imobiliaria'].str.strip().str.upper() != 'PRATI EMPREENDIMENTOS']
@@ -205,6 +218,13 @@ analise_situacao_outras.columns = ['Situação', 'Outras']
 # Mesclar os dataframes
 analise_comparativa = pd.merge(analise_situacao_prati, analise_situacao_outras, on='Situação', how='outer').fillna(0)
 analise_comparativa = analise_comparativa.astype({'Prati': int, 'Outras': int})
+
+# Criar mapeamento para ordem
+ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
+
+# Adicionar coluna de ordem e ordenar
+analise_comparativa['ordem'] = analise_comparativa['Situação'].map(ordem_mapping)
+analise_comparativa = analise_comparativa.sort_values('ordem').drop('ordem', axis=1)
 
 # Exibir tabela comparativa
 st.table(analise_comparativa)
