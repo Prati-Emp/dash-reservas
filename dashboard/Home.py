@@ -234,7 +234,8 @@ with col1:
 with col2:
     valor_total = df_sem_canceladas_vendidas['valor_contrato'].sum()
     st.metric(label="Valor Total", value=format_currency(valor_total))
-
+    
+    
 # Reservas por Situação
 st.subheader("Reservas Por Situação")
 
@@ -287,6 +288,8 @@ reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=
 
 st.table(reservas_por_situacao)
 
+st.divider()
+
 # Reservas por Empreendimento
 st.subheader("Reservas Por Empreendimento")
 
@@ -332,6 +335,8 @@ totais_empreendimento = pd.DataFrame([{
 reservas_por_empreendimento = pd.concat([reservas_por_empreendimento, totais_empreendimento], ignore_index=True)
 
 st.table(reservas_por_empreendimento)
+
+st.divider()
 
 # Tabela detalhada
 st.subheader("Lista De Reservas")

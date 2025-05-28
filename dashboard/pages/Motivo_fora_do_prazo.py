@@ -199,6 +199,8 @@ analise_situacao['Valor Total'] = analise_situacao['Valor Total'].apply(format_c
 
 st.table(analise_situacao)
 
+st.divider()
+
 # Análise por empreendimento
 st.subheader("Análise por Empreendimento")
 
@@ -240,6 +242,8 @@ def get_reservation_messages(idreserva):
     except Exception as e:
         st.error(f"Erro ao buscar mensagens da reserva {idreserva}: {str(e)}")
         return []
+
+st.divider()
 
 # Lista detalhada de reservas fora do prazo em formato de cards
 st.subheader("Cards de Reservas Fora do Prazo")

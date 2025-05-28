@@ -209,14 +209,20 @@ analise_comparativa = analise_comparativa.astype({'Prati': int, 'Outras': int})
 # Exibir tabela comparativa
 st.table(analise_comparativa)
 
+st.divider()
+
 # Análise por Imobiliária
 st.subheader("Análise por Imobiliária")
 
 # Exibir tabela de análise por imobiliária
 st.table(analise_imobiliaria)
 
+st.divider()
+
 # Criar duas colunas para os gráficos
 col_valor, col_qtd = st.columns(2)
+
+
 
 with col_valor:
     st.subheader("Distribuição de Valores por Imobiliária")
