@@ -248,21 +248,21 @@ col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 3])
 
 with col1:
     # Total de vendas no período usando data_venda
-    total_vendas = len(df_filtrado[
-        (df_filtrado['situacao'] == 'Vendida') & 
-        (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
-        (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
-    ])
-    st.metric("Total de Vendas", f"{total_vendas:,}")
-
-with col2:
-    # Valor total atual usando data_venda
     vendas_periodo = df_filtrado[
         (df_filtrado['situacao'] == 'Vendida') & 
         (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
         (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
     ]
-    valor_total = vendas_periodo['valor_contrato'].sum()
+    total_vendas = len(vendas_periodo)
+    
+    if total_vendas == 0 and empreendimento_selecionado != "Todos":
+        st.warning(f"Não há vendas registradas para {empreendimento_selecionado} no período selecionado.")
+        
+    st.metric("Total de Vendas", f"{total_vendas:,}")
+
+with col2:
+    # Valor total atual usando data_venda
+    valor_total = vendas_periodo['valor_contrato'].sum() if not vendas_periodo.empty else 0
     st.metric(
         "Valor Total em Vendas",
         format_currency(valor_total)
@@ -333,12 +333,7 @@ with col4:
 
 with col5:
     # Tempo médio apenas das vendas do período
-    vendas_periodo = df_filtrado[
-        (df_filtrado['situacao'] == 'Vendida') & 
-        (df_filtrado['data_venda'].dt.date >= data_inicio) & 
-        (df_filtrado['data_venda'].dt.date <= data_fim)
-    ]
-    tempo_medio_geral = int(vendas_periodo['tempo_ate_venda'].mean().round(0))
+    tempo_medio_geral = int(vendas_periodo['tempo_ate_venda'].mean().round(0)) if not vendas_periodo.empty else 0
     st.metric("Tempo Médio até a Venda", f"{tempo_medio_geral} dias")
 
 st.divider()
