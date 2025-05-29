@@ -11,6 +11,19 @@ import duckdb
 from dotenv import load_dotenv
 import os
 
+# Metas de vendas por mês
+meta_vendas = {
+    "Data": [
+        "2025-01-01", "2025-02-01", "2025-03-01", "2025-04-01",
+        "2025-05-01", "2025-06-01", "2025-07-01", "2025-08-01",
+        "2025-09-01", "2025-10-01", "2025-11-01", "2025-12-01"
+    ],
+    "Meta de vendas": [
+        1941000.0, 1941000.0, 2961000.0, 12481000.0,
+        12195000.0, 10836000.0, 10279000.0, 8828000.0,
+        11622000.0, 11500000.0, 10155000.0, 5385000.0
+    ]
+}
 
 # Configuração da página
 st.set_page_config(page_title="Análise de Vendas", layout="wide")
@@ -230,6 +243,24 @@ with col2:
         "Valor Total em Vendas",
         format_currency(valor_total),
         f"{variacao_valor:+.1f}% vs mês anterior"
+    )
+
+    # Calcular meta para o período selecionado
+    meta_df = pd.DataFrame(meta_vendas)
+    meta_df['Data'] = pd.to_datetime(meta_df['Data'])
+    meta_periodo = meta_df[
+        (meta_df['Data'].dt.date >= data_inicio) & 
+        (meta_df['Data'].dt.date <= data_fim)
+    ]
+    valor_meta = meta_periodo['Meta de vendas'].sum()
+    
+    # Calcular atingimento da meta
+    atingimento = (valor_total / valor_meta * 100) if valor_meta > 0 else 0
+    
+    st.metric(
+        "Meta do Período",
+        format_currency(valor_meta),
+        f"{atingimento:.1f}% atingido"
     )
 
 with col3:
