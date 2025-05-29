@@ -11,18 +11,50 @@ import duckdb
 from dotenv import load_dotenv
 import os
 
-# Metas de vendas por mês
+# Metas de vendas por mês e empreendimento
 meta_vendas = {
-    "Data": [
-        "2025-01-01", "2025-02-01", "2025-03-01", "2025-04-01",
-        "2025-05-01", "2025-06-01", "2025-07-01", "2025-08-01",
-        "2025-09-01", "2025-10-01", "2025-11-01", "2025-12-01"
-    ],
-    "Meta de vendas": [
-        1941000.0, 1941000.0, 2961000.0, 12481000.0,
-        12195000.0, 10836000.0, 10279000.0, 8828000.0,
-        11622000.0, 11500000.0, 10155000.0, 5385000.0
-    ]
+    'Gualtieri': {
+        '2025-01': 501000.0, '2025-02': 501000.0, '2025-03': 501000.0,
+        '2025-04': 501000.0, '2025-05': 501000.0, '2025-06': 501000.0,
+        '2025-07': 334000.0, '2025-08': 334000.0, '2025-09': 334000.0,
+        '2025-10': 167000.0, '2025-11': 167000.0, '2025-12': 0.0
+    },
+    'Residencial Canada': {
+        '2025-01': 0.0, '2025-02': 0.0, '2025-03': 0.0,
+        '2025-04': 0.0, '2025-05': 0.0, '2025-06': 0.0,
+        '2025-07': 0.0, '2025-08': 0.0, '2025-09': 3400000.0,
+        '2025-10': 4420000.0, '2025-11': 3400000.0, '2025-12': 2380000.0
+    },
+    'Residencial Carmel': {
+        '2025-01': 0.0, '2025-02': 0.0, '2025-03': 0.0,
+        '2025-04': 0.0, '2025-05': 0.0, '2025-06': 2925000.0,
+        '2025-07': 2925000.0, '2025-08': 1950000.0, '2025-09': 1950000.0,
+        '2025-10': 1625000.0, '2025-11': 1300000.0, '2025-12': 975000.0
+    },
+    'Residencial Ducale': {
+        '2025-01': 320000.0, '2025-02': 320000.0, '2025-03': 320000.0,
+        '2025-04': 320000.0, '2025-05': 640000.0, '2025-06': 640000.0,
+        '2025-07': 640000.0, '2025-08': 640000.0, '2025-09': 640000.0,
+        '2025-10': 640000.0, '2025-11': 640000.0, '2025-12': 0.0
+    },
+    'Residencial Horizont': {
+        '2025-01': 1120000.0, '2025-02': 1120000.0, '2025-03': 840000.0,
+        '2025-04': 840000.0, '2025-05': 840000.0, '2025-06': 840000.0,
+        '2025-07': 840000.0, '2025-08': 840000.0, '2025-09': 840000.0,
+        '2025-10': 840000.0, '2025-11': 840000.0, '2025-12': 840000.0
+    },
+    'Vera Cruz': {
+        '2025-01': 0.0, '2025-02': 0.0, '2025-03': 1300000.0,
+        '2025-04': 1300000.0, '2025-05': 1170000.0, '2025-06': 1170000.0,
+        '2025-07': 780000.0, '2025-08': 780000.0, '2025-09': 650000.0,
+        '2025-10': 0.0, '2025-11': 0.0, '2025-12': 0.0
+    },
+    'Villa Bella I': {
+        '2025-01': 0.0, '2025-02': 0.0, '2025-03': 0.0,
+        '2025-04': 9520000.0, '2025-05': 9044000.0, '2025-06': 4760000.0,
+        '2025-07': 4760000.0, '2025-08': 4284000.0, '2025-09': 3808000.0,
+        '2025-10': 3808000.0, '2025-11': 3808000.0, '2025-12': 1190000.0
+    }
 }
 
 # Configuração da página
@@ -163,15 +195,15 @@ if tipo_venda_selecionado != "Todos":
 # Para vendas, usar data_venda no filtro
 vendas_filtradas = df_filtrado[
     (df_filtrado['situacao'] == 'Vendida') & 
-    (df_filtrado['data_venda'].dt.date >= data_inicio) & 
-    (df_filtrado['data_venda'].dt.date <= data_fim)
+    (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+    (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
 ]
 
 # Para outras situações, manter o filtro por data_cad
 outras_situacoes = df_filtrado[
     (df_filtrado['situacao'] != 'Vendida') & 
-    (df_filtrado['data_cad'].dt.date >= data_inicio) & 
-    (df_filtrado['data_cad'].dt.date <= data_fim)
+    (df_filtrado['data_cad'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+    (df_filtrado['data_cad'].dt.normalize() <= pd.Timestamp(data_fim))
 ]
 
 # Combinar os dataframes
@@ -179,20 +211,18 @@ df_filtrado = pd.concat([vendas_filtradas, outras_situacoes])
 
 # Calcular dados do mês anterior
 data_inicio_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(months=1)
-data_fim_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(days=1)
-
-# Filtrar vendas do mês anterior usando data_venda
+data_fim_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(days=1)    # Filtrar vendas do mês anterior usando data_venda
 vendas_mes_anterior = reservas_df[
     (reservas_df['situacao'] == 'Vendida') & 
-    (reservas_df['data_venda'].dt.date >= data_inicio_mes_anterior.date()) & 
-    (reservas_df['data_venda'].dt.date <= data_fim_mes_anterior.date())
+    (reservas_df['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio_mes_anterior)) & 
+    (reservas_df['data_venda'].dt.normalize() <= pd.Timestamp(data_fim_mes_anterior))
 ]
 
 # Filtrar outras situações do mês anterior usando data_cad
 outras_situacoes_mes_anterior = reservas_df[
     (reservas_df['situacao'] != 'Vendida') & 
-    (reservas_df['data_cad'].dt.date >= data_inicio_mes_anterior.date()) & 
-    (reservas_df['data_cad'].dt.date <= data_fim_mes_anterior.date())
+    (reservas_df['data_cad'].dt.normalize() >= pd.Timestamp(data_inicio_mes_anterior)) & 
+    (reservas_df['data_cad'].dt.normalize() <= pd.Timestamp(data_fim_mes_anterior))
 ]
 
 # Combinar os dataframes do mês anterior
@@ -211,8 +241,8 @@ with col1:
     # Total de vendas no período usando data_venda
     total_vendas = len(df_filtrado[
         (df_filtrado['situacao'] == 'Vendida') & 
-        (df_filtrado['data_venda'].dt.date >= data_inicio) & 
-        (df_filtrado['data_venda'].dt.date <= data_fim)
+        (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+        (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
     ])
     st.metric("Total de Vendas", f"{total_vendas:,}")
 
@@ -220,8 +250,8 @@ with col2:
     # Valor total atual usando data_venda
     vendas_periodo = df_filtrado[
         (df_filtrado['situacao'] == 'Vendida') & 
-        (df_filtrado['data_venda'].dt.date >= data_inicio) & 
-        (df_filtrado['data_venda'].dt.date <= data_fim)
+        (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+        (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
     ]
     valor_total = vendas_periodo['valor_contrato'].sum()
     st.metric(
@@ -229,16 +259,31 @@ with col2:
         format_currency(valor_total)
     )
 
-with col3:
-    # Calcular meta para o período selecionado
-    meta_df = pd.DataFrame(meta_vendas)
-    meta_df['Data'] = pd.to_datetime(meta_df['Data'])
-    meta_periodo = meta_df[
-        (meta_df['Data'].dt.date >= data_inicio) & 
-        (meta_df['Data'].dt.date <= data_fim)
-    ]
-    valor_meta = meta_periodo['Meta de vendas'].sum()
-      # Calcular atingimento da meta
+with col3:    # Calcular meta para o período selecionado
+    valor_meta = 0
+    data_inicio_ts = pd.Timestamp(data_inicio)
+    data_fim_ts = pd.Timestamp(data_fim)
+    
+    if empreendimento_selecionado != "Todos":
+        # Se um empreendimento específico foi selecionado
+        if empreendimento_selecionado in meta_vendas:
+            metas_emp = meta_vendas[empreendimento_selecionado]
+            # Somar metas dentro do período selecionado
+            for mes, valor in metas_emp.items():
+                mes_ts = pd.Timestamp(f"{mes}-01")  # Converter para timestamp para comparação correta
+                # Só considera meses com meta > 0 e dentro do período selecionado
+                if valor > 0 and data_inicio_ts <= mes_ts <= data_fim_ts:
+                    valor_meta += valor
+    else:
+        # Se nenhum empreendimento específico foi selecionado, somar todos
+        for emp, metas in meta_vendas.items():
+            for mes, valor in metas.items():
+                mes_ts = pd.Timestamp(f"{mes}-01")  # Converter para timestamp para comparação correta
+                # Só considera meses com meta > 0 e dentro do período selecionado
+                if valor > 0 and data_inicio_ts <= mes_ts <= data_fim_ts:
+                    valor_meta += valor
+    
+    # Calcular atingimento da meta
     atingimento = (valor_total / valor_meta * 100) if valor_meta > 0 else 0
     
     st.metric(
@@ -252,18 +297,17 @@ with col4:
     # Taxa house atual (usando data_venda)
     vendas_periodo = df_filtrado[
         (df_filtrado['situacao'] == 'Vendida') & 
-        (df_filtrado['data_venda'].dt.date >= data_inicio) & 
-        (df_filtrado['data_venda'].dt.date <= data_fim)
+        (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+        (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
     ]
     vendas_internas = len(vendas_periodo[vendas_periodo['tipo_venda_origem'] == 'Venda Interna (Prati)'])
     total_vendas_periodo = len(vendas_periodo)
     taxa_house = (vendas_internas / total_vendas_periodo * 100) if total_vendas_periodo > 0 else 0
-    
-    # Taxa house mês anterior (usando data_venda)
+      # Taxa house mês anterior (usando data_venda)
     vendas_anterior = df_mes_anterior[
         (df_mes_anterior['situacao'] == 'Vendida') & 
-        (df_mes_anterior['data_venda'].dt.date >= data_inicio_mes_anterior.date()) & 
-        (df_mes_anterior['data_venda'].dt.date <= data_fim_mes_anterior.date())
+        (df_mes_anterior['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio_mes_anterior)) & 
+        (df_mes_anterior['data_venda'].dt.normalize() <= pd.Timestamp(data_fim_mes_anterior))
     ]
     vendas_internas_anterior = len(vendas_anterior[vendas_anterior['tipo_venda_origem'] == 'Venda Interna (Prati)'])
     total_vendas_anterior = len(vendas_anterior)
