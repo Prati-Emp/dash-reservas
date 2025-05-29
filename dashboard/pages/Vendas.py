@@ -19,25 +19,25 @@ meta_vendas = {
         '2025-07': 334000.0, '2025-08': 334000.0, '2025-09': 334000.0,
         '2025-10': 167000.0, '2025-11': 167000.0, '2025-12': 0.0
     },
-    'Residencial Canada': {
+    'Canada': {
         '2025-01': 0.0, '2025-02': 0.0, '2025-03': 0.0,
         '2025-04': 0.0, '2025-05': 0.0, '2025-06': 0.0,
         '2025-07': 0.0, '2025-08': 0.0, '2025-09': 3400000.0,
         '2025-10': 4420000.0, '2025-11': 3400000.0, '2025-12': 2380000.0
     },
-    'Residencial Carmel': {
+    'Carmel': {
         '2025-01': 0.0, '2025-02': 0.0, '2025-03': 0.0,
         '2025-04': 0.0, '2025-05': 0.0, '2025-06': 2925000.0,
         '2025-07': 2925000.0, '2025-08': 1950000.0, '2025-09': 1950000.0,
         '2025-10': 1625000.0, '2025-11': 1300000.0, '2025-12': 975000.0
     },
-    'Residencial Ducale': {
+    'Ducale': {
         '2025-01': 320000.0, '2025-02': 320000.0, '2025-03': 320000.0,
         '2025-04': 320000.0, '2025-05': 640000.0, '2025-06': 640000.0,
         '2025-07': 640000.0, '2025-08': 640000.0, '2025-09': 640000.0,
         '2025-10': 640000.0, '2025-11': 640000.0, '2025-12': 0.0
     },
-    'Residencial Horizont': {
+    'Horizont': {
         '2025-01': 1120000.0, '2025-02': 1120000.0, '2025-03': 840000.0,
         '2025-04': 840000.0, '2025-05': 840000.0, '2025-06': 840000.0,
         '2025-07': 840000.0, '2025-08': 840000.0, '2025-09': 840000.0,
@@ -148,6 +148,15 @@ def load_data():
     )
     
     return reservas_df
+
+def normalizar_nome_empreendimento(nome):
+    """Remove prefixos comuns e normaliza o nome do empreendimento"""
+    prefixos = ['Residencial ', 'Loteamento ']
+    nome_normalizado = nome
+    for prefixo in prefixos:
+        if nome.startswith(prefixo):
+            nome_normalizado = nome.replace(prefixo, '')
+    return nome_normalizado
 
 # Título do aplicativo
 st.title("📈 Análise de Vendas")
@@ -265,13 +274,15 @@ with col3:    # Calcular meta para o período selecionado
     data_fim_ts = pd.Timestamp(data_fim)
     
     if empreendimento_selecionado != "Todos":
+        # Normaliza o nome do empreendimento selecionado
+        nome_normalizado = normalizar_nome_empreendimento(empreendimento_selecionado)
+        
         # Se um empreendimento específico foi selecionado
-        if empreendimento_selecionado in meta_vendas:
-            metas_emp = meta_vendas[empreendimento_selecionado]
+        if nome_normalizado in meta_vendas:
+            metas_emp = meta_vendas[nome_normalizado]
             # Somar metas dentro do período selecionado
             for mes, valor in metas_emp.items():
-                mes_ts = pd.Timestamp(f"{mes}-01")  # Converter para timestamp para comparação correta
-                # Só considera meses com meta > 0 e dentro do período selecionado
+                mes_ts = pd.Timestamp(f"{mes}-01")
                 if valor > 0 and data_inicio_ts <= mes_ts <= data_fim_ts:
                     valor_meta += valor
     else:
