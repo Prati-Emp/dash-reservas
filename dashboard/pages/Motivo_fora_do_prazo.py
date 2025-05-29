@@ -7,7 +7,9 @@ st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
 USER_ID_TO_NAME = {
     "129": "Djonathan Souza (Analista)",
     "80": "José Aquino (Gestor)",
+    "97": "Italo Peres (Gestor)",
     "114": "Camila Novaes (Gestor)",
+    "128": "Adriana Casarin (Gestor)",
     "157": "Marciane Ross (Corretor)",
     "240": "Alana Konzen (Corretor)",
     "282": "Gabriela Vettorello (Corretor)",
