@@ -238,14 +238,14 @@ with col3:
         (meta_df['Data'].dt.date <= data_fim)
     ]
     valor_meta = meta_periodo['Meta de vendas'].sum()
-    
-    # Calcular atingimento da meta
+      # Calcular atingimento da meta
     atingimento = (valor_total / valor_meta * 100) if valor_meta > 0 else 0
     
     st.metric(
         "Meta do Período",
         format_currency(valor_meta),
-        f"{atingimento:.1f}% atingido"
+        f"{atingimento:.1f}% atingido",
+        delta_color="inverse" if atingimento < 100 else "normal"
     )
 
 with col4:
