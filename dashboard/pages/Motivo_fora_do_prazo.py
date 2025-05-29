@@ -6,13 +6,17 @@ st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
 # Dicionário de mapeamento de IDs de usuários para nomes
 USER_ID_TO_NAME = {
     "129": "Djonathan Souza (Analista)",
+    "80": "José Aquino (Gestor)",
     "114": "Camila Novaes (Gestor)",
     "157": "Marciane Ross (Corretor)",
     "240": "Alana Konzen (Corretor)",
     "282": "Gabriela Vettorello (Corretor)",
-    "80": "José Aquino (Gestor)",
-    "4": "Juliane Zwick(Correspondente)",
-    "5": "	Carine J.  Kaiser(Correspondente)"
+    "4": "Juliane Zwick (Correspondente)",
+    "5": "Carine Kaiser (Correspondente)",
+    "9": "Luciano Santiago (Correspondente)",
+    "11": "Vanessa Gonzaga (Correspondente)",
+    "12": "Gustavo Grabski (Correspondente)",
+    "16": "	Fabio Weinman (Correspondente)",
 }
 
 import sys
@@ -296,40 +300,34 @@ for i in range(0, len(df_fora_prazo), 3):
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Empreendimento:</strong> {row['empreendimento']}</p>
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Situação:</strong> {row['situacao']}</p>
                         <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Dias na Situação:</strong> {row['dias_na_situacao']}</p>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Valor:</strong> {format_currency(row['valor_contrato'])}</p>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Imobiliária:</strong> {row['imobiliaria']}</p>                    </div>
+                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Valor:</strong> {format_currency(row['valor_contrato'])}</p>                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Imobiliária:</strong> {row['imobiliaria']}</p>
+                    </div>
                 """, unsafe_allow_html=True)
                 
                 if messages:
                     with st.expander("Ver Mensagens"):
                         for msg in messages:
-                            # Get message content
-                            mensagem = msg.get('mensagem', '')
+                            # Try each user ID field in order
+                            user_id = None
                             
-                            # Check for special message case first
-                            if mensagem.startswith("✅ Avaliação de Risco Pré Aprovada"):
-                                user_name = "Correspondente Bancario"
-                            else:                                # Try each user ID field in order
-                                user_id = None
-                                
-                                # Check idusuario first
-                                if msg.get('idusuario') is not None:
-                                    user_id = str(msg.get('idusuario'))
-                                # Then check idusuarioImobiliaria
-                                elif msg.get('idusuarioImobiliaria') is not None:
-                                    user_id = str(msg.get('idusuarioImobiliaria'))
-                                # Then check idcorretor
-                                elif msg.get('idcorretor') is not None:
-                                    user_id = str(msg.get('idcorretor'))
-                                # Finally check idusuarioCorrespondente
-                                elif msg.get('idusuarioCorrespondente') is not None:
-                                    user_id = str(msg.get('idusuarioCorrespondente'))
-                                
-                                # If we found a user ID, try to map it, otherwise use default name
-                                if user_id and user_id in USER_ID_TO_NAME:
-                                    user_name = USER_ID_TO_NAME[user_id]
-                                else:
-                                    user_name = msg.get('usuario_nome', 'N/A')
+                            # Check idusuario first
+                            if msg.get('idusuario') is not None:
+                                user_id = str(msg.get('idusuario'))
+                            # Then check idusuarioImobiliaria
+                            elif msg.get('idusuarioImobiliaria') is not None:
+                                user_id = str(msg.get('idusuarioImobiliaria'))
+                            # Then check idcorretor
+                            elif msg.get('idcorretor') is not None:
+                                user_id = str(msg.get('idcorretor'))
+                            # Finally check idusuarioCorrespondente
+                            elif msg.get('idusuarioCorrespondente') is not None:
+                                user_id = str(msg.get('idusuarioCorrespondente'))
+                            
+                            # If we found a user ID, try to map it, otherwise use default name
+                            if user_id and user_id in USER_ID_TO_NAME:
+                                user_name = USER_ID_TO_NAME[user_id]
+                            else:
+                                user_name = msg.get('usuario_nome', 'N/A')
                               # Formatar a data
                             data_mensagem = msg.get('dataCad', 'N/A')
                             if data_mensagem != 'N/A':
