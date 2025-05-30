@@ -93,7 +93,8 @@ def gerar_csv(dados, nome_arquivo='reservas_abril.csv'):
     
     print(f"Arquivo {nome_arquivo} gerado com {len(dados)} registros")
 
-if __name__ == "__main__":    print("Iniciando busca de dados a partir de 01/01/2024..." )
+if __name__ == "__main__":
+    print("Iniciando busca de dados a partir de 01/01/2024..." )
     dados = obter_todos_dados()
     print(f"Total de registros encontrados: {len(dados)}")
     if dados:
