@@ -113,7 +113,19 @@ data_fim = st.sidebar.date_input(
 
 # Filtro de imobiliária
 imobiliarias = sorted(reservas_df['imobiliaria'].unique())
-imobiliaria_selecionada = st.sidebar.selectbox("Imobiliária", ["Todas"] + list(imobiliarias), key="imobiliaria_filter")
+# Preparar lista de opções com destaque para Prati
+options = ["Todas"] + list(imobiliarias)
+formatted_options = [
+    f"💠 {opt}" if "PRATI EMPREENDIMENTOS" in str(opt).upper() else opt 
+    for opt in options
+]
+option_to_display = dict(zip(options, formatted_options))
+imobiliaria_selecionada = st.sidebar.selectbox(
+    "Imobiliária", 
+    options,
+    format_func=lambda x: option_to_display[x],
+    key="imobiliaria_filter"
+)
 
 # Filtro de empreendimento
 empreendimentos = sorted(reservas_df['empreendimento'].unique())

@@ -153,6 +153,21 @@ data_fim = st.sidebar.date_input(
 empreendimentos = sorted(reservas_df['empreendimento'].unique())
 empreendimento_selecionado = st.sidebar.selectbox("Empreendimento", ["Todos"] + list(empreendimentos))
 
+# Filtro de imobiliária
+imobiliarias = sorted(reservas_df['imobiliaria'].unique())
+# Preparar lista de opções com destaque para Prati
+options = ["Todas"] + list(imobiliarias)
+formatted_options = [
+    f"💠 {opt}" if "PRATI EMPREENDIMENTOS" in str(opt).upper() else opt 
+    for opt in options
+]
+option_to_display = dict(zip(options, formatted_options))
+imobiliaria_selecionada = st.sidebar.selectbox(
+    "Imobiliária", 
+    options,
+    format_func=lambda x: option_to_display[x]
+)
+
 # Filtro de situação
 situacoes = sorted(reservas_df[~reservas_df['situacao'].isin(['Vendida', 'Distrato', 'Cancelada'])]['situacao'].unique())
 situacao_selecionada = st.sidebar.selectbox("Situação", ["Todas"] + list(situacoes))
@@ -163,6 +178,8 @@ df_filtrado = reservas_df[mask].copy()
 
 if empreendimento_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado['empreendimento'] == empreendimento_selecionado]
+if imobiliaria_selecionada != "Todas":
+    df_filtrado = df_filtrado[df_filtrado['imobiliaria'] == imobiliaria_selecionada]
 if situacao_selecionada != "Todas":
     df_filtrado = df_filtrado[df_filtrado['situacao'] == situacao_selecionada]
 
