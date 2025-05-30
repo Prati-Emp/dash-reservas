@@ -121,16 +121,23 @@ def get_motherduck_connection():
 # Carregando os dados
 @st.cache_data
 def load_data():
-    conn = get_motherduck_connection()
-      # Buscar todas as reservas com tipo de venda
+    conn = get_motherduck_connection()    # Buscar todas as reservas com tipo de venda
     reservas_df = conn.sql("""
         SELECT 
             r.*,
             COALESCE(r.tipovenda, 'Outros') as tipo_venda,
             CASE 
-                WHEN r.situacao = 'Vendida' THEN r.data_ultima_alteracao_situacao
+                WHEN r.situacao = 'Vendida' THEN CAST(r.data_ultima_alteracao_situacao AS TIMESTAMP)
                 ELSE NULL 
-            END as data_venda
+            END as data_venda,
+            CASE 
+                WHEN r.situacao = 'Vendida' THEN date_part('year', CAST(r.data_ultima_alteracao_situacao AS TIMESTAMP))
+                ELSE NULL 
+            END as ano_venda,
+            CASE 
+                WHEN r.situacao = 'Vendida' THEN date_part('month', CAST(r.data_ultima_alteracao_situacao AS TIMESTAMP))
+                ELSE NULL 
+            END as mes_venda
         FROM reservas.main.reservas_abril r
     """).df()
     
@@ -138,6 +145,7 @@ def load_data():
     reservas_df['data_cad'] = pd.to_datetime(reservas_df['data_cad'])
     reservas_df['data_ultima_alteracao_situacao'] = pd.to_datetime(reservas_df['data_ultima_alteracao_situacao'])
     reservas_df['data_venda'] = pd.to_datetime(reservas_df['data_venda'])
+  
     
     # Calcular tempo até a venda (em dias)
     reservas_df['tempo_ate_venda'] = (reservas_df['data_ultima_alteracao_situacao'] - reservas_df['data_cad']).dt.days
@@ -167,19 +175,23 @@ reservas_df = load_data()
 # Sidebar para filtros
 st.sidebar.header("Filtros")
 
-# Filtro de data - usar data_venda para vendas
+# Log para debug das datas disponíveis
 vendas_datas = reservas_df[reservas_df['situacao'] == 'Vendida']['data_venda'].dropna()
+min_data = min(vendas_datas.dt.date)
+max_data = max(vendas_datas.dt.date)
+
+# Filtro de data - usar data_venda para vendas
 data_inicio = st.sidebar.date_input(
     "Data Inicial",
     value=pd.Timestamp('2025-01-01'),
-    min_value=min(vendas_datas.dt.date),
-    max_value=max(vendas_datas.dt.date)
+    min_value=min_data,
+    max_value=max_data
 )
 data_fim = st.sidebar.date_input(
     "Data Final",
-    value=max(vendas_datas.dt.date),
-    min_value=min(vendas_datas.dt.date),
-    max_value=max(vendas_datas.dt.date)
+    value=max_data,
+    min_value=min_data,
+    max_value=max_data
 )
 
 # Filtro de empreendimento
@@ -201,19 +213,28 @@ if empreendimento_selecionado != "Todos":
 if imobiliaria_selecionada != "Todas":
     df_filtrado = df_filtrado[df_filtrado['imobiliaria'] == imobiliaria_selecionada]
 
+# Para vendas, usar data_venda no filtro - com validação de dados
+vendas_2024 = df_filtrado[
+    (df_filtrado['situacao'] == 'Vendida') & 
+    (df_filtrado['data_venda'].dt.year == 2024)
+]
+
+
 # Para vendas, usar data_venda no filtro
 vendas_filtradas = df_filtrado[
     (df_filtrado['situacao'] == 'Vendida') & 
-    (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
-    (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
+    (df_filtrado['data_venda'].dt.date >= data_inicio) & 
+    (df_filtrado['data_venda'].dt.date <= data_fim)
 ]
 
 # Para outras situações, manter o filtro por data_cad
 outras_situacoes = df_filtrado[
     (df_filtrado['situacao'] != 'Vendida') & 
-    (df_filtrado['data_cad'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
-    (df_filtrado['data_cad'].dt.normalize() <= pd.Timestamp(data_fim))
+    (df_filtrado['data_cad'].dt.date >= data_inicio) & 
+    (df_filtrado['data_cad'].dt.date <= data_fim)
 ]
+
+
 
 # Combinar os dataframes
 df_filtrado = pd.concat([vendas_filtradas, outras_situacoes])
@@ -434,7 +455,7 @@ st.divider()
 # Análise de conversão de reservas em vendas
 st.subheader("Taxa de Conversão de Vendas")
 
-# Calcular taxas de conversão para vendas internas e externas
+# Calcular taxas de conversao para vendas internas e externas
 def calcular_taxa_conversao(df, df_reservas, tipo_venda, data_inicio, data_fim, empreendimento=None, imobiliaria=None):
     # Aplicar os mesmos filtros de empreendimento e imobiliária nas reservas
     df_reservas_filtrado = df_reservas.copy()

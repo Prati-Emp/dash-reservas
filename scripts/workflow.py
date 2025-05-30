@@ -17,13 +17,8 @@ try:
         "email": os.environ.get('CVCRM_EMAIL', '').strip(),
         "token": os.environ.get('CVCRM_TOKEN', '').strip(),
     }
-    
-    print("DEBUG - Credenciais workflow (após strip):")
-    print(f"Email: {headers['email']}")
-    print(f"Token: {headers['token']}")
 except Exception as e:
-    print(f"Erro ao configurar credenciais: {str(e)}")
-    print(f"Variáveis de ambiente disponíveis: {list(os.environ.keys())}")
+    print("Erro ao configurar credenciais. Verifique as variáveis de ambiente.")
     sys.exit(1)
 
 # Data de corte - 01/01/2024
