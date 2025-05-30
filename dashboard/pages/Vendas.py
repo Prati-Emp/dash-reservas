@@ -219,8 +219,9 @@ outras_situacoes = df_filtrado[
 df_filtrado = pd.concat([vendas_filtradas, outras_situacoes])
 
 # Calcular dados do mês anterior
-data_inicio_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(months=1)
-data_fim_mes_anterior = pd.Timestamp(data_inicio) - pd.DateOffset(days=1)    # Filtrar vendas do mês anterior usando data_venda
+data_inicio_mes_anterior = pd.Timestamp('2025-01-01') if pd.Timestamp(data_inicio).strftime('%Y-%m-%d') == '2025-01-01' else pd.Timestamp(data_inicio) - pd.DateOffset(months=1)
+data_fim_mes_anterior = pd.Timestamp('2025-01-01') - pd.DateOffset(days=1) if pd.Timestamp(data_inicio).strftime('%Y-%m-%d') == '2025-01-01' else pd.Timestamp(data_inicio) - pd.DateOffset(days=1)
+# Filtrar vendas do mês anterior usando data_venda
 vendas_mes_anterior = reservas_df[
     (reservas_df['situacao'] == 'Vendida') & 
     (reservas_df['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio_mes_anterior)) & 
