@@ -8,6 +8,7 @@ USER_ID_TO_NAME = {
     "129": "Djonathan Souza (Analista)",
     "80": "José Aquino (Gestor)",
     "97": "Italo Peres (Gestor)",
+    "91": "Luana Casarin (Gestor)",
     "114": "Camila Novaes (Gestor)",
     "128": "Adriana Casarin (Gestor)",
     "157": "Marciane Ross (Corretor)",
