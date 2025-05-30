@@ -339,7 +339,7 @@ with col5:
 st.divider()
 
 # Análise por tipo de venda (Interna vs Externa)
-st.subheader("Análise por Origem da Venda")
+st.subheader("Análise Vendas House x Imobiliárias")
 
 # Filtrar apenas vendas efetivas
 df_vendas = df_filtrado[df_filtrado['situacao'] == 'Vendida']
@@ -359,7 +359,7 @@ st.table(analise_origem)
 st.divider()
 
 # Análise estratificada por empreendimento e tipo de venda
-st.subheader("Filtro por Tipo de Venda")
+st.subheader("Vendas House x Imobiliárias por Empreendimento")
 
 # Criar DataFrames separados para cada métrica
 # Usar apenas vendas efetivas
@@ -431,7 +431,7 @@ st.table(estratificacao)
 st.divider()
 
 # Análise de conversão de reservas em vendas
-st.subheader("Taxa de Conversão de Reservas em Vendas")
+st.subheader("Taxa de Conversão de Vendas")
 
 # Calcular taxas de conversão para vendas internas e externas
 def calcular_taxa_conversao(df, df_reservas, tipo_venda, data_inicio, data_fim):
