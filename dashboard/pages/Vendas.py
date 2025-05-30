@@ -434,12 +434,19 @@ st.divider()
 st.subheader("Taxa de Conversão de Vendas")
 
 # Calcular taxas de conversão para vendas internas e externas
-def calcular_taxa_conversao(df, df_reservas, tipo_venda, data_inicio, data_fim):
-    # Total de reservas no período
-    reservas_periodo = df_reservas[
-        (df_reservas['tipo_venda_origem'] == tipo_venda) &
-        (df_reservas['data_cad'].dt.date >= data_inicio) &
-        (df_reservas['data_cad'].dt.date <= data_fim)
+def calcular_taxa_conversao(df, df_reservas, tipo_venda, data_inicio, data_fim, empreendimento=None, imobiliaria=None):
+    # Aplicar os mesmos filtros de empreendimento e imobiliária nas reservas
+    df_reservas_filtrado = df_reservas.copy()
+    if empreendimento and empreendimento != "Todos":
+        df_reservas_filtrado = df_reservas_filtrado[df_reservas_filtrado['empreendimento'] == empreendimento]
+    if imobiliaria and imobiliaria != "Todas":
+        df_reservas_filtrado = df_reservas_filtrado[df_reservas_filtrado['imobiliaria'] == imobiliaria]
+
+    # Total de reservas no período com filtros aplicados
+    reservas_periodo = df_reservas_filtrado[
+        (df_reservas_filtrado['tipo_venda_origem'] == tipo_venda) &
+        (df_reservas_filtrado['data_cad'].dt.date >= data_inicio) &
+        (df_reservas_filtrado['data_cad'].dt.date <= data_fim)
     ]
     total_reservas = len(reservas_periodo)
     
@@ -460,8 +467,10 @@ def calcular_taxa_conversao(df, df_reservas, tipo_venda, data_inicio, data_fim):
     })
 
 # Criar DataFrame de conversão usando data_venda para o período
-conversao_interna = calcular_taxa_conversao(df_filtrado, reservas_df, 'Venda Interna (Prati)', data_inicio, data_fim)
-conversao_externa = calcular_taxa_conversao(df_filtrado, reservas_df, 'Venda Externa (Imobiliárias)', data_inicio, data_fim)
+conversao_interna = calcular_taxa_conversao(df_filtrado, reservas_df, 'Venda Interna (Prati)', data_inicio, data_fim, 
+                                          empreendimento_selecionado, imobiliaria_selecionada)
+conversao_externa = calcular_taxa_conversao(df_filtrado, reservas_df, 'Venda Externa (Imobiliárias)', data_inicio, data_fim,
+                                          empreendimento_selecionado, imobiliaria_selecionada)
 
 conversao_df = pd.DataFrame({
     'Métricas': ['Total Reservas', 'Total Vendas', 'Taxa de Conversão'],
