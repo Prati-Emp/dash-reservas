@@ -186,9 +186,9 @@ data_fim = st.sidebar.date_input(
 empreendimentos = sorted(reservas_df['empreendimento'].unique())
 empreendimento_selecionado = st.sidebar.selectbox("Empreendimento", ["Todos"] + list(empreendimentos))
 
-# Filtro de tipo de venda
-tipos_venda = sorted(reservas_df['tipo_venda'].unique())
-tipo_venda_selecionado = st.sidebar.selectbox("Tipo de Venda", ["Todos"] + list(tipos_venda))
+# Filtro de imobiliária
+imobiliarias = sorted(reservas_df['imobiliaria'].unique())
+imobiliaria_selecionada = st.sidebar.selectbox("Imobiliária", ["Todas"] + list(imobiliarias))
 
 # Aplicar filtros básicos (não relacionados à data)
 df_filtrado = reservas_df.copy()
@@ -197,9 +197,9 @@ df_filtrado = reservas_df.copy()
 if empreendimento_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado['empreendimento'] == empreendimento_selecionado]
 
-# Aplicar filtro de tipo de venda se selecionado
-if tipo_venda_selecionado != "Todos":
-    df_filtrado = df_filtrado[df_filtrado['tipo_venda'] == tipo_venda_selecionado]
+# Aplicar filtro de imobiliária se selecionado
+if imobiliaria_selecionada != "Todas":
+    df_filtrado = df_filtrado[df_filtrado['imobiliaria'] == imobiliaria_selecionada]
 
 # Para vendas, usar data_venda no filtro
 vendas_filtradas = df_filtrado[
@@ -240,8 +240,8 @@ df_mes_anterior = pd.concat([vendas_mes_anterior, outras_situacoes_mes_anterior]
 # Aplicar os mesmos filtros do mês atual ao mês anterior
 if empreendimento_selecionado != "Todos":
     df_mes_anterior = df_mes_anterior[df_mes_anterior['empreendimento'] == empreendimento_selecionado]
-if tipo_venda_selecionado != "Todos":
-    df_mes_anterior = df_mes_anterior[df_mes_anterior['tipo_venda'] == tipo_venda_selecionado]
+if imobiliaria_selecionada != "Todas":
+    df_mes_anterior = df_mes_anterior[df_mes_anterior['imobiliaria'] == imobiliaria_selecionada]
 
 # Métricas principais em uma linha
 col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 3])
@@ -392,12 +392,14 @@ tempo = df_vendas.pivot_table(
 # Criar DataFrame final
 estratificacao = pd.DataFrame()
 estratificacao['Empreendimento'] = quantidade['empreendimento']
-estratificacao['Quantidade (Interna)'] = quantidade['Venda Interna (Prati)']
-estratificacao['Quantidade (Externa)'] = quantidade['Venda Externa (Imobiliárias)']
-estratificacao['Valor Total (Interna)'] = valor['Venda Interna (Prati)']
-estratificacao['Valor Total (Externa)'] = valor['Venda Externa (Imobiliárias)']
-estratificacao['Tempo Médio (Interna)'] = tempo['Venda Interna (Prati)']
-estratificacao['Tempo Médio (Externa)'] = tempo['Venda Externa (Imobiliárias)']
+
+# Adicionar colunas com tratamento para colunas que podem não existir
+estratificacao['Quantidade (Interna)'] = quantidade['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in quantidade.columns else 0
+estratificacao['Quantidade (Externa)'] = quantidade['Venda Externa (Imobiliárias)'] if 'Venda Externa (Imobiliárias)' in quantidade.columns else 0
+estratificacao['Valor Total (Interna)'] = valor['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in valor.columns else 0
+estratificacao['Valor Total (Externa)'] = valor['Venda Externa (Imobiliárias)'] if 'Venda Externa (Imobiliárias)' in valor.columns else 0
+estratificacao['Tempo Médio (Interna)'] = tempo['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in tempo.columns else 0
+estratificacao['Tempo Médio (Externa)'] = tempo['Venda Externa (Imobiliárias)'] if 'Venda Externa (Imobiliárias)' in tempo.columns else 0
 
 # Formatar valores
 estratificacao['Valor Total (Interna)'] = estratificacao['Valor Total (Interna)'].apply(format_currency)
@@ -406,13 +408,17 @@ estratificacao['Tempo Médio (Interna)'] = estratificacao['Tempo Médio (Interna
 estratificacao['Tempo Médio (Externa)'] = estratificacao['Tempo Médio (Externa)'].round(0).astype(int)
 
 # Calcular e adicionar linha de totais
+vendas_internas = df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Interna (Prati)']
+vendas_externas = df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']
+
 totais = pd.DataFrame([{
     'Empreendimento': 'Total',
-    'Quantidade (Interna)': df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Interna (Prati)']['idreserva'].count(),
-    'Quantidade (Externa)': df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['idreserva'].count(),
-    'Valor Total (Interna)': format_currency(df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Interna (Prati)']['valor_contrato'].sum()),
-    'Valor Total (Externa)': format_currency(df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['valor_contrato'].sum()),'Tempo Médio (Interna)': int(df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Interna (Prati)']['tempo_ate_venda'].mean().round(0)),
-    'Tempo Médio (Externa)': int(df_filtrado[df_filtrado['tipo_venda_origem'] == 'Venda Externa (Imobiliárias)']['tempo_ate_venda'].mean().round(0))
+    'Quantidade (Interna)': vendas_internas['idreserva'].count(),
+    'Quantidade (Externa)': vendas_externas['idreserva'].count(),
+    'Valor Total (Interna)': format_currency(vendas_internas['valor_contrato'].sum()),
+    'Valor Total (Externa)': format_currency(vendas_externas['valor_contrato'].sum()),
+    'Tempo Médio (Interna)': int(vendas_internas['tempo_ate_venda'].mean()) if not vendas_internas.empty else 0,
+    'Tempo Médio (Externa)': int(vendas_externas['tempo_ate_venda'].mean()) if not vendas_externas.empty else 0
 }])
 
 estratificacao = pd.concat([estratificacao, totais], ignore_index=True)

@@ -18,7 +18,7 @@ USER_ID_TO_NAME = {
     "9": "Luciano Santiago (Correspondente)",
     "11": "Vanessa Gonzaga (Correspondente)",
     "12": "Gustavo Grabski (Correspondente)",
-    "16": "	Fabio Weinman (Correspondente)",
+    "16": "Fabio Weinman (Correspondente)",
 }
 
 import sys
