@@ -350,7 +350,7 @@ with col4:
         "Taxa House",
         f"{taxa_house:.1f}%",
         f"{variacao_taxa:+.1f}% vs mês anterior",
-        help="Total de vendas realizadas pela Prati Empreendimentos"
+        help="Porcentagem de vendas realizadas pela Prati Empreendimentos"
     )
 
 with col5:
