@@ -26,11 +26,11 @@ except Exception as e:
     print(f"Variáveis de ambiente disponíveis: {list(os.environ.keys())}")
     sys.exit(1)
 
-# Data de corte - 01/04/2025
-DATA_CORTE = datetime(2025, 4, 1)
+# Data de corte - 01/01/2024
+DATA_CORTE = datetime(2024, 1, 1)
 
 def filtrar_por_data(dados):
-    """Filtra dados a partir de 01/04/2025"""
+    """Filtra dados a partir de 01/01/2024"""
     dados_filtrados = []
     for item in dados:
         try:
@@ -91,9 +91,10 @@ def gerar_csv(dados, nome_arquivo='workflow_abril.csv'):
     
     print(f"Arquivo {nome_arquivo} gerado com {len(dados)} registros")
 
-if __name__ == "__main__":
-    print("Iniciando busca de dados a partir de 01/04/2025...")
+if __name__ == "__main__":    print("Iniciando busca de dados a partir de 01/01/2024...")
     dados = obter_todos_dados()
     print(f"Total de registros encontrados: {len(dados)}")
-    if not dados:
+    if dados:
+        gerar_csv(dados)
+    else:
         print("Nenhum registro encontrado após a data de corte")
