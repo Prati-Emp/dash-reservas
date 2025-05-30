@@ -344,19 +344,19 @@ with col4:
     ]
     vendas_internas_anterior = len(vendas_anterior[vendas_anterior['tipo_venda_origem'] == 'Venda Interna (Prati)'])
     total_vendas_anterior = len(vendas_anterior)
-    taxa_house_anterior = (vendas_internas_anterior / total_vendas_anterior * 100) if total_vendas_anterior > 0 else 0
-      # Calcular variação em pontos percentuais
+    taxa_house_anterior = (vendas_internas_anterior / total_vendas_anterior * 100) if total_vendas_anterior > 0 else 0    # Calcular variação em pontos percentuais
     variacao_taxa = taxa_house - taxa_house_anterior
     st.metric(
         "Taxa House",
         f"{taxa_house:.1f}%",
-        f"{variacao_taxa:+.1f}% vs mês anterior"
+        f"{variacao_taxa:+.1f}% vs mês anterior",
+        help="Total de vendas realizadas pela Prati Empreendimentos"
     )
 
 with col5:
     # Tempo médio apenas das vendas do período
     tempo_medio_geral = int(vendas_periodo['tempo_ate_venda'].mean().round(0)) if not vendas_periodo.empty else 0
-    st.metric("Tempo Médio até a Venda", f"{tempo_medio_geral} dias")
+    st.metric("Tempo Médio até a Venda", f"{tempo_medio_geral} dias", help="Tempo entre a reserva e a venda efetiva")
 
 st.divider()
 
