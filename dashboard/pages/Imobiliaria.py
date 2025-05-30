@@ -111,13 +111,27 @@ data_fim = st.sidebar.date_input(
     key="data_fim_filter"
 )
 
-# Filtro de imobiliária
-imobiliarias = sorted(reservas_df['imobiliaria'].unique())
-# Preparar lista de opções com destaque para Prati
-options = ["Todas"] + list(imobiliarias)
+# Filtro de imobiliária ordenado por vendas totais
+vendas_por_imobiliaria = reservas_df[reservas_df['situacao'] == 'Vendida'].groupby('imobiliaria')['idreserva'].count().reset_index()
+vendas_por_imobiliaria.columns = ['imobiliaria', 'total_vendas']
+vendas_por_imobiliaria = vendas_por_imobiliaria.sort_values('total_vendas', ascending=False)
+
+# Obter lista ordenada de imobiliárias por vendas
+imobiliarias = vendas_por_imobiliaria['imobiliaria'].tolist()
+
+# Adicionar imobiliárias sem vendas no período ao final da lista
+todas_imobiliarias = set(reservas_df['imobiliaria'].unique())
+imobiliarias.extend([i for i in todas_imobiliarias if i not in imobiliarias])
+
+# Preparar lista de opções com destaque para Prati e mostrar contagem de vendas
+options = ["Todas"] + imobiliarias
+formatted_options = [
+    f"{opt} ({vendas_por_imobiliaria[vendas_por_imobiliaria['imobiliaria'] == opt]['total_vendas'].iloc[0] if opt in vendas_por_imobiliaria['imobiliaria'].values else 0})" 
+    if opt != "Todas" else opt for opt in options
+]
 formatted_options = [
     f"💠 {opt}" if "PRATI EMPREENDIMENTOS" in str(opt).upper() else opt 
-    for opt in options
+    for opt in formatted_options
 ]
 option_to_display = dict(zip(options, formatted_options))
 imobiliaria_selecionada = st.sidebar.selectbox(
