@@ -311,11 +311,17 @@ with col1:
 
 with col2:    # Valor total atual usando data_venda
     valor_total = vendas_periodo['valor_contrato'].sum() if not vendas_periodo.empty else 0
-    # Calcular valor total de Mutuo no período
-    mutuo_periodo = df_filtrado[
-        (df_filtrado['situacao'] == 'Mútuo') & 
-        (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
-        (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize() <= pd.Timestamp(data_fim))
+    # Calcular valor total de Mutuo no período usando data_ultima_alteracao_situacao
+    base_mutuo = reservas_df.copy()
+    if empreendimento_selecionado != "Todos":
+        base_mutuo = base_mutuo[base_mutuo['empreendimento'] == empreendimento_selecionado]
+    if imobiliaria_selecionada != "Todas":
+        base_mutuo = base_mutuo[base_mutuo['imobiliaria'] == imobiliaria_selecionada]
+        
+    mutuo_periodo = base_mutuo[
+        (base_mutuo['situacao'] == 'Mútuo') & 
+        (base_mutuo['data_ultima_alteracao_situacao'].dt.date >= data_inicio) & 
+        (base_mutuo['data_ultima_alteracao_situacao'].dt.date <= data_fim)
     ]
     valor_mutuo = mutuo_periodo['valor_contrato'].sum() if not mutuo_periodo.empty else 0
     col2_1, col2_2 = st.columns([2, 2])
