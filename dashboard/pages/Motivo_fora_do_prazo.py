@@ -5,12 +5,16 @@ st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
 
 # Dicionário de mapeamento de IDs de usuários para nomes
 USER_ID_TO_NAME = {
-    "129": "Djonathan Souza (Analista)",
+    "52": "Gustavo Sordi (Gestor)",
+    "69": "Giovana Ramos Fiorentini (Gestor)",
     "80": "José Aquino (Gestor)",
     "97": "Italo Peres (Gestor)",
     "91": "Luana Casarin (Gestor)",
+    "100": "Vitoria Almeida (Gestor)",
     "114": "Camila Novaes (Gestor)",
+    "125": "Lucas Mateus Follmann (Gestor)",
     "128": "Adriana Casarin (Gestor)",
+    "129": "Djonathan Souza (Analista)",
     "157": "Marciane Ross (Corretor)",
     "240": "Alana Konzen (Corretor)",
     "282": "Gabriela Vettorello (Corretor)",
