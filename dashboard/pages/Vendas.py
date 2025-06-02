@@ -293,7 +293,7 @@ if imobiliaria_selecionada != "Todas":
     df_mes_anterior = df_mes_anterior[df_mes_anterior['imobiliaria'] == imobiliaria_selecionada]
 
 # Métricas principais em uma linha
-col1, col2, col3, col4, col5 = st.columns([1.5, 4, 2.5, 1.5, 1.5])
+col1, col2, col3, col4, col5 = st.columns([2, 3, 3, 2, 2])
 
 with col1:
     # Total de vendas no período usando data_venda
@@ -323,18 +323,14 @@ with col2:    # Valor total atual usando data_venda
         (base_mutuo['data_ultima_alteracao_situacao'].dt.date >= data_inicio) & 
         (base_mutuo['data_ultima_alteracao_situacao'].dt.date <= data_fim)
     ]
-    valor_mutuo = mutuo_periodo['valor_contrato'].sum() if not mutuo_periodo.empty else 0
-    col2_1, col2_2 = st.columns([2, 2])
-    with col2_1:
-        st.metric(
-            "Valor Total em Vendas",
-            format_currency(valor_total)
-        )
-    with col2_2:
-        st.metric(
-            "Valor em Mútuo",
-            format_currency(valor_mutuo)
-        )
+    valor_mutuo = mutuo_periodo['valor_contrato'].sum() if not mutuo_periodo.empty else 0    # Calcular o valor total (vendas + mútuo)
+    valor_total_com_mutuo = valor_total + valor_mutuo
+    
+    st.metric(
+        "Valor Total em Vendas",
+        format_currency(valor_total_com_mutuo),
+        help="Soma do valor de vendas e mútuos no período"
+    )
 
 with col3:# Calcular meta para o período selecionado
     valor_meta = 0
