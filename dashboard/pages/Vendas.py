@@ -293,7 +293,7 @@ if imobiliaria_selecionada != "Todas":
     df_mes_anterior = df_mes_anterior[df_mes_anterior['imobiliaria'] == imobiliaria_selecionada]
 
 # Métricas principais em uma linha
-col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 3])
+col1, col2, col3, col4, col5 = st.columns([1.5, 4, 2.5, 1.5, 1.5])
 
 with col1:
     # Total de vendas no período usando data_venda
@@ -309,15 +309,28 @@ with col1:
         
     st.metric("Total de Vendas", f"{total_vendas:,}")
 
-with col2:
-    # Valor total atual usando data_venda
+with col2:    # Valor total atual usando data_venda
     valor_total = vendas_periodo['valor_contrato'].sum() if not vendas_periodo.empty else 0
-    st.metric(
-        "Valor Total em Vendas",
-        format_currency(valor_total)
-    )
+    # Calcular valor total de Mutuo no período
+    mutuo_periodo = df_filtrado[
+        (df_filtrado['situacao'] == 'Mútuo') & 
+        (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+        (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize() <= pd.Timestamp(data_fim))
+    ]
+    valor_mutuo = mutuo_periodo['valor_contrato'].sum() if not mutuo_periodo.empty else 0
+    col2_1, col2_2 = st.columns([2, 2])
+    with col2_1:
+        st.metric(
+            "Valor Total em Vendas",
+            format_currency(valor_total)
+        )
+    with col2_2:
+        st.metric(
+            "Valor em Mútuo",
+            format_currency(valor_mutuo)
+        )
 
-with col3:    # Calcular meta para o período selecionado
+with col3:# Calcular meta para o período selecionado
     valor_meta = 0
     data_inicio_ts = pd.Timestamp(data_inicio)
     data_fim_ts = pd.Timestamp(data_fim)
