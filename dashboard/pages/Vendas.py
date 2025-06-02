@@ -357,9 +357,8 @@ with col3:# Calcular meta para o período selecionado
                 # Só considera meses com meta > 0 e dentro do período selecionado
                 if valor > 0 and data_inicio_ts <= mes_ts <= data_fim_ts:
                     valor_meta += valor
-    
-    # Calcular atingimento da meta
-    atingimento = (valor_total / valor_meta * 100) if valor_meta > 0 else 0
+      # Calcular atingimento da meta
+    atingimento = (valor_total_com_mutuo / valor_meta * 100) if valor_meta > 0 else 0
     
     st.metric(
         "Meta do Período",
@@ -368,31 +367,35 @@ with col3:# Calcular meta para o período selecionado
         delta_color="inverse" if atingimento < 100 else "normal"
     )
 
-with col4:
-    # Taxa house atual (usando data_venda)
-    vendas_periodo = df_filtrado[
-        (df_filtrado['situacao'] == 'Vendida') & 
-        (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
-        (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
+with col4:    # Taxa house atual (considerando vendas e mútuos)
+    vendas_e_mutuo = df_filtrado[
+        ((df_filtrado['situacao'] == 'Vendida') & 
+         (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+         (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))) |
+        ((df_filtrado['situacao'] == 'Mútuo') & 
+         (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+         (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize() <= pd.Timestamp(data_fim)))
     ]
-    vendas_internas = len(vendas_periodo[vendas_periodo['tipo_venda_origem'] == 'Venda Interna (Prati)'])
-    total_vendas_periodo = len(vendas_periodo)
-    taxa_house = (vendas_internas / total_vendas_periodo * 100) if total_vendas_periodo > 0 else 0
-      # Taxa house mês anterior (usando data_venda)
-    vendas_anterior = df_mes_anterior[
-        (df_mes_anterior['situacao'] == 'Vendida') & 
-        (df_mes_anterior['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio_mes_anterior)) & 
-        (df_mes_anterior['data_venda'].dt.normalize() <= pd.Timestamp(data_fim_mes_anterior))
+    transacoes_internas = len(vendas_e_mutuo[vendas_e_mutuo['tipo_venda_origem'] == 'Venda Interna (Prati)'])
+    total_transacoes = len(vendas_e_mutuo)
+    taxa_house = (transacoes_internas / total_transacoes * 100) if total_transacoes > 0 else 0      # Taxa house mês anterior (considerando vendas e mútuos)
+    vendas_e_mutuo_anterior = df_mes_anterior[
+        ((df_mes_anterior['situacao'] == 'Vendida') & 
+         (df_mes_anterior['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio_mes_anterior)) & 
+         (df_mes_anterior['data_venda'].dt.normalize() <= pd.Timestamp(data_fim_mes_anterior))) |
+        ((df_mes_anterior['situacao'] == 'Mútuo') & 
+         (df_mes_anterior['data_ultima_alteracao_situacao'].dt.normalize() >= pd.Timestamp(data_inicio_mes_anterior)) & 
+         (df_mes_anterior['data_ultima_alteracao_situacao'].dt.normalize() <= pd.Timestamp(data_fim_mes_anterior)))
     ]
-    vendas_internas_anterior = len(vendas_anterior[vendas_anterior['tipo_venda_origem'] == 'Venda Interna (Prati)'])
-    total_vendas_anterior = len(vendas_anterior)
-    taxa_house_anterior = (vendas_internas_anterior / total_vendas_anterior * 100) if total_vendas_anterior > 0 else 0    # Calcular variação em pontos percentuais
+    transacoes_internas_anterior = len(vendas_e_mutuo_anterior[vendas_e_mutuo_anterior['tipo_venda_origem'] == 'Venda Interna (Prati)'])
+    total_transacoes_anterior = len(vendas_e_mutuo_anterior)
+    taxa_house_anterior = (transacoes_internas_anterior / total_transacoes_anterior * 100) if total_transacoes_anterior > 0 else 0# Calcular variação em pontos percentuais
     variacao_taxa = taxa_house - taxa_house_anterior
     st.metric(
         "Taxa House",
         f"{taxa_house:.1f}%",
         f"{variacao_taxa:+.1f}% vs mês anterior",
-        help="Porcentagem de vendas realizadas pela Prati Empreendimentos"
+        help="Porcentagem de vendas e mútuos realizados pela Prati Empreendimentos"
     )
 
 with col5:
@@ -405,8 +408,17 @@ st.divider()
 # Análise por tipo de venda (Interna vs Externa)
 st.subheader("Análise Vendas House x Imobiliárias")
 
-# Filtrar apenas vendas efetivas
-df_vendas = df_filtrado[df_filtrado['situacao'] == 'Vendida']
+# Filtrar vendas e mútuos do período
+df_vendas = df_filtrado[
+    (
+        ((df_filtrado['situacao'] == 'Vendida') & 
+         (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+         (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))) |
+        ((df_filtrado['situacao'] == 'Mútuo') & 
+         (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
+         (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize() <= pd.Timestamp(data_fim)))
+    )
+]
 
 analise_origem = df_vendas.groupby('tipo_venda_origem').agg({
     'idreserva': 'count',
@@ -416,7 +428,7 @@ analise_origem = df_vendas.groupby('tipo_venda_origem').agg({
 
 analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total', 'Tempo Médio (dias)']
 analise_origem['Valor Total'] = analise_origem['Valor Total'].apply(format_currency)
-analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].round(0).astype(int)
+analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].round(1)
 
 st.table(analise_origem)
 
