@@ -13,6 +13,7 @@ USER_ID_TO_NAME = {
     "100": "Vitoria Almeida (Gestor)",
     "114": "Camila Novaes (Gestor)",
     "125": "Lucas Mateus Follmann (Gestor)",
+    "126": "Fernanda Tomio (Gestor)",
     "128": "Adriana Casarin (Gestor)",
     "129": "Djonathan Souza (Analista)",
     "157": "Marciane Ross (Corretor)",
