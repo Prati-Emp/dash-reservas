@@ -171,47 +171,60 @@ def get_motherduck_connection():
 # Carregando os dados
 @st.cache_data
 def load_data():
-    conn = get_motherduck_connection()    # Usando as tabelas do MotherDuck com o esquema correto
-    reservas_df = conn.sql("""
-        SELECT *
-        FROM reservas.main.reservas_abril
-    """).df()
-    
-    workflow_df = conn.sql("""
-        SELECT *
-        FROM reservas.main.workflow_abril
-    """).df()
-    
-    # Converter colunas de data com tratamento de erros
     try:
-        reservas_df['data_cad'] = pd.to_datetime(reservas_df['data_cad'], errors='coerce')
-        reservas_df['data_ultima_alteracao_situacao'] = pd.to_datetime(reservas_df['data_ultima_alteracao_situacao'], errors='coerce')
-        workflow_df['referencia_data'] = pd.to_datetime(workflow_df['referencia_data'], errors='coerce')
+        conn = get_motherduck_connection()
         
-        # Remover linhas com datas inválidas
+        # Usando as tabelas do MotherDuck com o esquema correto
+        reservas_df = conn.sql("""
+            SELECT *
+            FROM reservas.main.reservas_abril
+        """).df()
+        
+        workflow_df = conn.sql("""
+            SELECT *
+            FROM reservas.main.workflow_abril
+        """).df()
+        
+        # Converter colunas de data com tratamento de erros
+        for df in [reservas_df, workflow_df]:
+            for col in df.select_dtypes(include=['object']).columns:
+                try:
+                    if 'data' in col.lower():
+                        df[col] = pd.to_datetime(df[col], errors='coerce')
+                except Exception as e:
+                    st.warning(f"Erro ao converter coluna {col}: {str(e)}")
+        
+        # Remover linhas com datas inválidas apenas das colunas necessárias
         reservas_df = reservas_df.dropna(subset=['data_cad'])
         
         # Se não houver dados válidos, criar DataFrame com dados padrão
         if len(reservas_df) == 0:
+            current_date = pd.Timestamp.now()
             reservas_df = pd.DataFrame({
-                'data_cad': [pd.Timestamp('2025-01-01')],
-                'data_ultima_alteracao_situacao': [pd.Timestamp('2025-01-01')],
+                'data_cad': [current_date],
+                'data_ultima_alteracao_situacao': [current_date],
                 'empreendimento': ['Sem dados'],
                 'situacao': ['Sem dados'],
                 'valor_contrato': [0]
             })
+            
+        return reservas_df, workflow_df
+        
     except Exception as e:
-        st.error(f"Erro ao processar datas: {str(e)}")
+        st.error(f"Erro ao carregar dados: {str(e)}")
+        current_date = pd.Timestamp.now()
+        
         # Criar DataFrame com dados padrão em caso de erro
         reservas_df = pd.DataFrame({
-            'data_cad': [pd.Timestamp('2025-01-01')],
-            'data_ultima_alteracao_situacao': [pd.Timestamp('2025-01-01')],
+            'data_cad': [current_date],
+            'data_ultima_alteracao_situacao': [current_date],
             'empreendimento': ['Erro ao carregar dados'],
             'situacao': ['Erro'],
             'valor_contrato': [0]
         })
-    
-    return reservas_df, workflow_df
+        workflow_df = pd.DataFrame()
+        
+        return reservas_df, workflow_df
 
 reservas_df, workflow_df = load_data()
 
@@ -223,25 +236,46 @@ default_start_date = pd.Timestamp('2025-01-01').date()
 default_end_date = datetime.now().date()
 
 try:
-    min_date = min(reservas_df['data_cad'].dt.date)
-    max_date = max(reservas_df['data_cad'].dt.date)
-except:
+    # Converter datas para datetime.date
+    valid_dates = reservas_df['data_cad'].dropna().dt.date
+    if len(valid_dates) > 0:
+        min_date = min(valid_dates)
+        max_date = max(valid_dates)
+    else:
+        min_date = default_start_date
+        max_date = default_end_date
+except Exception as e:
+    st.warning("Usando datas padrão devido a erro na conversão de datas")
     min_date = default_start_date
     max_date = default_end_date
 
+# Garantir que as datas estejam em ordem correta
+if min_date > max_date:
+    min_date, max_date = max_date, min_date
+
+# Garantir que temos valores válidos para o date_input
+initial_value = min(max(default_start_date, min_date), max_date)
+
 # Filtro de data com valores seguros
-data_inicio = st.sidebar.date_input(
-    "Data Inicial",
-    value=default_start_date,
-    min_value=min_date,
-    max_value=max_date
-)
-data_fim = st.sidebar.date_input(
-    "Data Final",
-    value=max_date,
-    min_value=min_date,
-    max_value=max_date
-)
+try:
+    data_inicio = st.sidebar.date_input(
+        "Data Inicial",
+        value=initial_value,
+        min_value=min_date,
+        max_value=max_date
+    )
+    
+    # Garantir que a data final seja posterior à inicial
+    data_fim = st.sidebar.date_input(
+        "Data Final",
+        value=max(max_date, data_inicio),
+        min_value=data_inicio,
+        max_value=max_date
+    )
+except Exception as e:
+    st.error(f"Erro ao configurar filtros de data: {str(e)}")
+    data_inicio = min_date
+    data_fim = max_date
 
 # Filtro de empreendimento
 empreendimentos = sorted(reservas_df['empreendimento'].unique())
