@@ -1,8 +1,8 @@
-streamlit
-pandas
+streamlit>=1.32.0
+pandas>=2.0.0
 duckdb==1.2.2
-python-dotenv
-requests
-babel
-duckdb-engine
-plotly
+python-dotenv>=1.0.0
+requests>=2.31.0
+babel>=2.14.0
+duckdb-engine>=0.11.0
+plotly>=5.18.0

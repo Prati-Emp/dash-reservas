@@ -182,10 +182,34 @@ def load_data():
         FROM reservas.main.workflow_abril
     """).df()
     
-    # Converter colunas de data
-    reservas_df['data_cad'] = pd.to_datetime(reservas_df['data_cad'])
-    reservas_df['data_ultima_alteracao_situacao'] = pd.to_datetime(reservas_df['data_ultima_alteracao_situacao'])
-    workflow_df['referencia_data'] = pd.to_datetime(workflow_df['referencia_data'])
+    # Converter colunas de data com tratamento de erros
+    try:
+        reservas_df['data_cad'] = pd.to_datetime(reservas_df['data_cad'], errors='coerce')
+        reservas_df['data_ultima_alteracao_situacao'] = pd.to_datetime(reservas_df['data_ultima_alteracao_situacao'], errors='coerce')
+        workflow_df['referencia_data'] = pd.to_datetime(workflow_df['referencia_data'], errors='coerce')
+        
+        # Remover linhas com datas inválidas
+        reservas_df = reservas_df.dropna(subset=['data_cad'])
+        
+        # Se não houver dados válidos, criar DataFrame com dados padrão
+        if len(reservas_df) == 0:
+            reservas_df = pd.DataFrame({
+                'data_cad': [pd.Timestamp('2025-01-01')],
+                'data_ultima_alteracao_situacao': [pd.Timestamp('2025-01-01')],
+                'empreendimento': ['Sem dados'],
+                'situacao': ['Sem dados'],
+                'valor_contrato': [0]
+            })
+    except Exception as e:
+        st.error(f"Erro ao processar datas: {str(e)}")
+        # Criar DataFrame com dados padrão em caso de erro
+        reservas_df = pd.DataFrame({
+            'data_cad': [pd.Timestamp('2025-01-01')],
+            'data_ultima_alteracao_situacao': [pd.Timestamp('2025-01-01')],
+            'empreendimento': ['Erro ao carregar dados'],
+            'situacao': ['Erro'],
+            'valor_contrato': [0]
+        })
     
     return reservas_df, workflow_df
 
@@ -194,18 +218,29 @@ reservas_df, workflow_df = load_data()
 # Sidebar para filtros
 st.sidebar.header("Filtros")
 
-# Filtro de data
+# Configurar valores padrão seguros para os filtros de data
+default_start_date = pd.Timestamp('2025-01-01').date()
+default_end_date = datetime.now().date()
+
+try:
+    min_date = min(reservas_df['data_cad'].dt.date)
+    max_date = max(reservas_df['data_cad'].dt.date)
+except:
+    min_date = default_start_date
+    max_date = default_end_date
+
+# Filtro de data com valores seguros
 data_inicio = st.sidebar.date_input(
     "Data Inicial",
-    value=pd.Timestamp('2025-01-01'),  # Data padrão definida para 01/01/2025
-    min_value=min(reservas_df['data_cad'].dt.date),
-    max_value=max(reservas_df['data_cad'].dt.date)
+    value=default_start_date,
+    min_value=min_date,
+    max_value=max_date
 )
 data_fim = st.sidebar.date_input(
     "Data Final",
-    value=max(reservas_df['data_cad'].dt.date),
-    min_value=min(reservas_df['data_cad'].dt.date),
-    max_value=max(reservas_df['data_cad'].dt.date)
+    value=max_date,
+    min_value=min_date,
+    max_value=max_date
 )
 
 # Filtro de empreendimento
