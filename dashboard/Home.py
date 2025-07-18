@@ -318,7 +318,7 @@ ordem_situacoes = [
     'Contrato - Elaboração',
     'Contrato - Assinatura',
     'Vendida',
-    'Distrato'
+    # 'Distrato'
 ]
 
 # Contar reservas por situação do df_filtrado
@@ -470,7 +470,7 @@ ordem_situacoes = [
     'Contrato - Elaboração',
     'Contrato - Assinatura',
     'Vendida',
-    'Distrato'
+    # 'Distrato'
 ]
 
 # Criar DataFrame com a ordem correta
