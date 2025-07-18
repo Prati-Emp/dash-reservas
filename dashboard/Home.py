@@ -295,7 +295,7 @@ if situacao_selecionada != "Todas":
 df_filtrado = reservas_df[mask]
 
 # Métricas principais
-df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]
+df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida' 'Distrato'])]
 
 col1, col2 = st.columns(2)
 with col1:
@@ -322,7 +322,7 @@ ordem_situacoes = [
 ]
 
 # Contar reservas por situação do df_filtrado
-quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada'])]['situacao'].value_counts().reset_index()
+quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Distrato'])]['situacao'].value_counts().reset_index()
 quantidade_por_situacao.columns = ['Situação', 'Quantidade']
 
 # Criar mapeamento para ordem
