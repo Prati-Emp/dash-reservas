@@ -25,6 +25,10 @@ USER_ID_TO_NAME = {
     "11": "Vanessa Gonzaga (Correspondente)",
     "12": "Gustavo Grabski (Correspondente)",
     "16": "Fabio Weinman (Correspondente)",
+    "141": "Allana Heloyza Dias de Oliveira (Gestor)",
+    "142": "EDUARDA VITORIA COUTINHO GALLO - Duda (Gestor)",
+    "135": "Lavínia Gabrielly Fetsch - Lavínia (Gestor)",
+    "407": "VINICIUS HENRIQUE CZERNIEJ (Corretor)",
 }
 
 import sys
