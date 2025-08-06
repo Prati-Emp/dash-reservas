@@ -317,7 +317,7 @@ ordem_situacoes = [
     'Análise Diretoria',
     'Contrato - Elaboração',
     'Contrato - Assinatura',
-    'Vendida',
+    #'Vendida',
     # 'Distrato'
 ]
 
@@ -469,7 +469,7 @@ ordem_situacoes = [
     'Análise Diretoria',
     'Contrato - Elaboração',
     'Contrato - Assinatura',
-    'Vendida',
+   # 'Vendida',
     # 'Distrato'
 ]
 
