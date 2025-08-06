@@ -308,10 +308,12 @@ col1, col2, col3, col4, col5 = st.columns([2, 3, 3, 2, 2])
 with col1:
     # Total de vendas no período usando data_venda
     vendas_periodo = df_filtrado[
-        (df_filtrado['situacao'] == 'Vendida') & 
-        (df_filtrado['data_venda'].dt.normalize() >= pd.Timestamp(data_inicio)) & 
-        (df_filtrado['data_venda'].dt.normalize() <= pd.Timestamp(data_fim))
-    ]
+    (df_filtrado['situacao'].isin(['Vendida', 'Mútuo'])) &
+    (
+        (df_filtrado['data_venda'].dt.normalize().between(pd.Timestamp(data_inicio), pd.Timestamp(data_fim))) |
+        (df_filtrado['data_ultima_alteracao_situacao'].dt.normalize().between(pd.Timestamp(data_inicio), pd.Timestamp(data_fim)))
+    )
+]
     total_vendas = len(vendas_periodo)
     
     if total_vendas == 0 and empreendimento_selecionado != "Todos":
