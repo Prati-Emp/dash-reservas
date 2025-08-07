@@ -322,7 +322,7 @@ ordem_situacoes = [
 ]
 
 # Contar reservas por situação do df_filtrado
-quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Distrato', 'vendida'])]['situacao'].value_counts().reset_index()
+quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Distrato', 'Vendida'])]['situacao'].value_counts().reset_index()
 quantidade_por_situacao.columns = ['Situação', 'Quantidade']
 
 # Criar mapeamento para ordem
