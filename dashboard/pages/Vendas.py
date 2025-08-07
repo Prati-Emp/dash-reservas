@@ -406,7 +406,7 @@ with col4:    # Taxa house atual (considerando vendas e mútuos)
     st.metric(
         "Taxa House",
         f"{taxa_house:.1f}%",
-        f"{variacao_taxa:+.1f}% vs mês anterior",
+        f"{variacao_taxa:+.1f}% Por p.p",
         help="Porcentagem de vendas e mútuos realizados pela Prati Empreendimentos"
     )
 
