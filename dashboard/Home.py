@@ -295,7 +295,7 @@ if situacao_selecionada != "Todas":
 df_filtrado = reservas_df[mask]
 
 # Métricas principais
-df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida' 'Distrato'])]
+df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida', 'Distrato'])]
 
 col1, col2 = st.columns(2)
 with col1:
