@@ -451,7 +451,7 @@ st.subheader("Vendas House x Imobiliárias por Empreendimento")
 
 # Criar DataFrames separados para cada métrica
 # Usar apenas vendas efetivas
-df_vendas = df_filtrado[df_filtrado['situacao'] == 'Vendida', 'Mútuo']
+df_vendas = df_filtrado[df_filtrado['situacao'] == 'Vendida']
 
 quantidade = df_vendas.pivot_table(
     index='empreendimento',
