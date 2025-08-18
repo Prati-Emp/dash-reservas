@@ -480,8 +480,6 @@ estratificacao = pd.DataFrame()
 estratificacao['Empreendimento'] = quantidade['empreendimento']
 
 # Adicionar colunas com tratamento para colunas que podem não existir
-estratificacao['Quantidade (Interna)'] = quantidade['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in quantidade.columns else 0
-estratificacao['Quantidade (Externa)'] = quantidade['Venda Externa (Imobiliárias)'] if 'Venda Externa (Imobiliárias)' in quantidade.columns else 0
 estratificacao['Valor Total (Interna)'] = valor['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in valor.columns else 0
 estratificacao['Valor Total (Externa)'] = valor['Venda Externa (Imobiliárias)'] if 'Venda Externa (Imobiliárias)' in valor.columns else 0
 estratificacao['Tempo Médio (Interna)'] = tempo['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in tempo.columns else 0
@@ -490,8 +488,6 @@ estratificacao['Tempo Médio (Externa)'] = tempo['Venda Externa (Imobiliárias)'
 # Formatar valores
 estratificacao['Valor Total (Interna)'] = estratificacao['Valor Total (Interna)'].apply(format_currency)
 estratificacao['Valor Total (Externa)'] = estratificacao['Valor Total (Externa)'].apply(format_currency)
-estratificacao['Tempo Médio (Interna)'] = estratificacao['Tempo Médio (Interna)'].round(0).astype(int)
-estratificacao['Tempo Médio (Externa)'] = estratificacao['Tempo Médio (Externa)'].round(0).astype(int)
 
 # Calcular e adicionar linha de totais
 vendas_internas = df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Interna (Prati)']
