@@ -432,15 +432,13 @@ df_vendas = df_filtrado[
     )
 ]
 
-analise_origem = df_vendas.groupby('tipo_venda_origem').agg({
+aanalise_origem = df_vendas.groupby('tipo_venda_origem').agg({
     'idreserva': 'count',
-    'valor_contrato': 'sum',
-    'tempo_ate_venda': 'mean'
+    'valor_contrato': 'sum'
 }).reset_index()
 
-analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total', 'Tempo Médio (dias)']
+analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total']
 analise_origem['Valor Total'] = analise_origem['Valor Total'].apply(format_currency)
-analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].round(1)
 
 st.table(analise_origem)
 
