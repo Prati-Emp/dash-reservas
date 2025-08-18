@@ -437,8 +437,12 @@ aanalise_origem = df_vendas.groupby('tipo_venda_origem').agg({
     'valor_contrato': 'sum'
 }).reset_index()
 
+analise_origem = vendas.groupby('tipo_venda_origem').agg({
+    'idreserva': 'count',
+    'valor_contrato': 'sum'
+}).reset_index()
+
 analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total']
-analise_origem['Valor Total'] = analise_origem['Valor Total'].apply(format_currency)
 
 st.table(analise_origem)
 
