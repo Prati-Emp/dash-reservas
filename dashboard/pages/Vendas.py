@@ -432,16 +432,17 @@ df_vendas = df_filtrado[
     )
 ]
 
+# Agrupamento por tipo de venda sem o campo 'tempo_ate_venda'
 analise_origem = df_vendas.groupby('tipo_venda_origem').agg({
     'idreserva': 'count',
-    'valor_contrato': 'sum',
-    'tempo_ate_venda': 'mean'
+    'valor_contrato': 'sum'
 }).reset_index()
 
-analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total', 'Tempo Médio (dias)']
+# Ajustando os nomes das colunas
+analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total']
 analise_origem['Valor Total'] = analise_origem['Valor Total'].apply(format_currency)
-analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].round(1)
 
+# Exibindo tabela final sem a coluna "Tempo Médio (dias)"
 st.table(analise_origem)
 
 st.divider()
