@@ -433,7 +433,7 @@ df_vendas = df_filtrado[
 ]
 
 # Filtra apenas as vendas
-vendas = reservas[reservas['situacao'] == 'Venda']
+vendas = reservas[reservas['situacao'] == 'Vendida']
 
 analise_origem = vendas.groupby('tipo_venda_origem').agg({
     'idreserva': 'count',
