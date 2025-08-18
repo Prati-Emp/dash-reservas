@@ -432,15 +432,15 @@ df_vendas = df_filtrado[
     )
 ]
 
-# Filtra apenas as vendas
-vendas = reservas[reservas['situacao'] == 'Vendida']
-
-analise_origem = vendas.groupby('tipo_venda_origem').agg({
+analise_origem = df_vendas.groupby('tipo_venda_origem').agg({
     'idreserva': 'count',
-    'valor_contrato': 'sum'
+    'valor_contrato': 'sum',
+    'tempo_ate_venda': 'mean'
 }).reset_index()
 
-analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total']
+analise_origem.columns = ['Origem', 'Quantidade', 'Valor Total', 'Tempo Médio (dias)']
+analise_origem['Valor Total'] = analise_origem['Valor Total'].apply(format_currency)
+analise_origem['Tempo Médio (dias)'] = analise_origem['Tempo Médio (dias)'].round(1)
 
 st.table(analise_origem)
 
@@ -482,6 +482,8 @@ estratificacao = pd.DataFrame()
 estratificacao['Empreendimento'] = quantidade['empreendimento']
 
 # Adicionar colunas com tratamento para colunas que podem não existir
+estratificacao['Quantidade (Interna)'] = quantidade['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in quantidade.columns else 0
+estratificacao['Quantidade (Externa)'] = quantidade['Venda Externa (Imobiliárias)'] if 'Venda Externa (Imobiliárias)' in quantidade.columns else 0
 estratificacao['Valor Total (Interna)'] = valor['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in valor.columns else 0
 estratificacao['Valor Total (Externa)'] = valor['Venda Externa (Imobiliárias)'] if 'Venda Externa (Imobiliárias)' in valor.columns else 0
 estratificacao['Tempo Médio (Interna)'] = tempo['Venda Interna (Prati)'] if 'Venda Interna (Prati)' in tempo.columns else 0
@@ -490,6 +492,8 @@ estratificacao['Tempo Médio (Externa)'] = tempo['Venda Externa (Imobiliárias)'
 # Formatar valores
 estratificacao['Valor Total (Interna)'] = estratificacao['Valor Total (Interna)'].apply(format_currency)
 estratificacao['Valor Total (Externa)'] = estratificacao['Valor Total (Externa)'].apply(format_currency)
+estratificacao['Tempo Médio (Interna)'] = estratificacao['Tempo Médio (Interna)'].round(0).astype(int)
+estratificacao['Tempo Médio (Externa)'] = estratificacao['Tempo Médio (Externa)'].round(0).astype(int)
 
 # Calcular e adicionar linha de totais
 vendas_internas = df_vendas[df_vendas['tipo_venda_origem'] == 'Venda Interna (Prati)']
@@ -570,4 +574,3 @@ conversao_df = pd.DataFrame({
     ]
 })
 
-st.table(conversao_df)
