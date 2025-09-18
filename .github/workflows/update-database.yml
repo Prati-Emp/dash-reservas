@@ -2,7 +2,7 @@ name: Update Database
 
 on:
   schedule:
-    - cron: '0 9 * * *'  # Roda às 9:00 UTC (6:00 BRT) todos os dias
+    - cron: '0 9 * * *'  # Roda às 9:00 UTC (6:00 BRT) todos os diass
   workflow_dispatch:
     inputs:
       reason:
