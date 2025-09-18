@@ -210,8 +210,13 @@ if situacao_selecionada != "Todas":
 df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]
 
 # Verificar reservas fora do prazo
-df_sem_canceladas_vendidas['fora_do_prazo'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
-df_sem_canceladas_vendidas['dias_na_situacao'] = (datetime.now() - df_sem_canceladas_vendidas['data_ultima_alteracao_situacao']).dt.days
+df_sem_canceladas_vendidas['dias_na_situacao'] = (
+    datetime.now() - df_sem_canceladas_vendidas['data_ultima_alteracao_situacao']
+).dt.days
+
+df_sem_canceladas_vendidas['tempo_excedido'] = df_sem_canceladas_vendidas.apply(
+    lambda row: row['dias_na_situacao'] >= extract_days(row['situacao']), axis=1
+)
 
 # Métricas principais
 col1, col2, col3 = st.columns(3)
