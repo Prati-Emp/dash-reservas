@@ -1,41 +1,15 @@
 import streamlit as st
+import os
+
+# Função para obter o caminho absoluto da logo
+def get_logo_path():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(current_dir, "logo.png")
 
 # Configuração da página
-st.set_page_config(page_title="Motivo Fora do Prazo", layout="wide")
+st.set_page_config(page_title="Relatório de Reservas", layout="wide")
 
-# Dicionário de mapeamento de IDs de usuários para nomes
-USER_ID_TO_NAME = {
-    "52": "Gustavo Sordi (Gestor)",
-    "69": "Giovana Ramos Fiorentini (Gestor)",
-    "80": "José Aquino (Gestor)",
-    "97": "Italo Peres (Gestor)",
-    "91": "Luana Casarin (Gestor)",
-    "100": "Vitoria Almeida (Gestor)",
-    "114": "Camila Novaes (Gestor)",
-    "125": "Lucas Mateus Follmann (Gestor)",
-    "126": "Fernanda Tomio (Gestor)",
-    "128": "Adriana Casarin (Gestor)",
-    "129": "Djonathan Souza (Analista)",
-    "157": "Marciane Ross (Corretor)",
-    "240": "Alana Konzen (Corretor)",
-    "282": "Gabriela Vettorello (Corretor)",
-    "4": "Juliane Zwick (Correspondente)",
-    "5": "Carine Kaiser (Correspondente)",
-    "9": "Luciano Santiago (Correspondente)",
-    "11": "Vanessa Gonzaga (Correspondente)",
-    "12": "Gustavo Grabski (Correspondente)",
-    "16": "Fabio Weinman (Correspondente)",
-    "141": "Allana Heloyza Dias de Oliveira (Gestor)",
-    "142": "EDUARDA VITORIA COUTINHO GALLO - Duda (Gestor)",
-    "135": "Lavínia Gabrielly Fetsch - Lavínia (Gestor)",
-    "407": "VINICIUS HENRIQUE CZERNIEJ (Corretor)",
-}
-
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
 from utils import display_navigation
-
 # Display navigation bar (includes logo)
 display_navigation()
 
@@ -45,11 +19,9 @@ st.session_state['current_page'] = __file__
 import pandas as pd
 from datetime import datetime
 import re
-import requests
 import locale
 import duckdb
 from dotenv import load_dotenv
-import os
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -73,33 +45,79 @@ def format_currency(value):
     except:
         return f"R$ {value}"
 
-# MotherDuck connection
-@st.cache_resource
-def get_motherduck_connection():
-    """Create a cached connection to MotherDuck"""
-    try:
-        token = os.getenv('MOTHERDUCK_TOKEN')
-        if not token:
-            raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
-        
-        # Sanitize o token
-        token = token.strip().strip('"').strip("'")
-        
-        # Conectar diretamente ao MotherDuck com o token na URL (formato para conta free)
-        connection_string = f'motherduck:reservas?motherduck_token={token}'
-        
-        try:
-            conn = duckdb.connect(connection_string)
-            return conn
-        except Exception as e:
-            st.error(f"Erro na conexão com MotherDuck: {str(e)}")
-            raise
-    except Exception as e:
-        st.error(f"Erro ao configurar conexão: {str(e)}")
-        raise
+# def hide_sidebar():
+#     st.markdown("""
+#     <style>
+#         [data-testid="stSidebar"] {
+#             display: none;
+#         }
+#         .stTextInput > div > div > input {
+#             width: 200px !important;
+#         }
+#         .small-font {
+#             font-size: 14px !important;
+#             font-weight: normal !important;
+#             text-align: center !important;
+#         }
+#         div[data-testid="stImage"] {
+#             display: flex;
+#             justify-content: center;
+#         }
+#         div.stButton > button {
+#             width: 200px;
+#             margin: 0 auto;
+#             display: block;
+#         }
+#         div[data-testid="column"] {
+#             display: flex;
+#             flex-direction: column;
+#             align-items: center;
+#             justify-content: center;
+#         }
+#     </style>
+#     """, unsafe_allow_html=True)
 
+# # Função para verificar senha
+# def check_password():
+#     """Returns `True` if the user had the correct password."""
+    
+#     if "password_correct" not in st.session_state:
+#         # First run, hide sidebar and show password input
+#         hide_sidebar()
+        
+#         col1, col2, col3 = st.columns([1, 1, 1])
+#         with col2:
+#             # Logo centralizada usando arquivo local
+#             st.image(get_logo_path(), width=400)
+#             st.markdown("<br>", unsafe_allow_html=True)
+            
+#             # Campo de senha com label menor e centralizado
+#             st.markdown('<p class="small-font">Por favor, digite a senha para acessar o dashboard:</p>', unsafe_allow_html=True)
+#             password = st.text_input(
+#                 "",
+#                 type="password",
+#                 key="password",
+#                 label_visibility="collapsed"
+#             )
+            
+#             # Botão de entrar
+#             if st.button("Entrar"):
+#                 if password == "prati2025":
+#                     st.session_state["password_correct"] = True
+#                     st.rerun()
+#                 else:
+#                     st.error("😕 Senha incorreta")
+#         return False
+    
+#     return st.session_state.get("password_correct", False)
+
+# # Verifica a senha antes de mostrar qualquer conteúdo
+# if not check_password():
+#     st.stop()  # Não mostra nada além deste ponto se a senha estiver errada
+
+# # Se chegou aqui, a senha está correta
 # Título do aplicativo
-st.title("📅 Análise de Reservas Fora do Prazo")
+st.title("📊 Relatório De Reservas")
 
 def extract_days(situacao):
     # Extrai o número entre parênteses da situação
@@ -115,7 +133,7 @@ def check_time_limit(row):
     if dias_limite == 0:
         return False
         
-    # Pega a data da última alteração
+    # Pega a data da última alteração diretamente da tabela de reservas
     data_ultima_alteracao = pd.to_datetime(row['data_ultima_alteracao_situacao'])
     
     # Calcula a diferença entre agora e a última alteração em dias
@@ -124,22 +142,54 @@ def check_time_limit(row):
     # Verifica se o tempo desde a última alteração excede o limite
     return dias_decorridos >= dias_limite
 
+# MotherDuck connection
+@st.cache_resource
+def get_motherduck_connection():
+    """Create a cached connection to MotherDuck"""
+    try:        
+        token = os.getenv('MOTHERDUCK_TOKEN')
+        
+        if not token:
+            load_dotenv(override=True)
+            token = os.getenv('MOTHERDUCK_TOKEN')
+            st.write("Token após reload do .env:", "Sim" if token else "Não")
+            
+            if not token:
+                raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
+
+        # Sanitize
+        token = token.strip().strip('"').strip("'")
+        os.environ["MOTHERDUCK_TOKEN"] = token  
+        
+        conn = duckdb.connect("md:reservas")
+        return conn
+
+    except Exception as e:
+        st.error(f"Erro ao configurar conexão: {str(e)}")
+        raise
+
 # Carregando os dados
 @st.cache_data
 def load_data():
-    conn = get_motherduck_connection()      # Usando a tabela correta do MotherDuck
+    conn = get_motherduck_connection()    # Usando as tabelas do MotherDuck com o esquema correto
     reservas_df = conn.sql("""
         SELECT *
         FROM reservas.main.reservas_abril
     """).df()
     
+    workflow_df = conn.sql("""
+        SELECT *
+        FROM reservas.main.workflow_abril
+    """).df()
+    
     # Converter colunas de data
     reservas_df['data_cad'] = pd.to_datetime(reservas_df['data_cad'])
     reservas_df['data_ultima_alteracao_situacao'] = pd.to_datetime(reservas_df['data_ultima_alteracao_situacao'])
+    workflow_df['referencia_data'] = pd.to_datetime(workflow_df['referencia_data'])
     
-    return reservas_df
+    return reservas_df, workflow_df
 
-reservas_df = load_data()
+reservas_df, workflow_df = load_data()
 
 # Sidebar para filtros
 st.sidebar.header("Filtros")
@@ -162,69 +212,32 @@ data_fim = st.sidebar.date_input(
 empreendimentos = sorted(reservas_df['empreendimento'].unique())
 empreendimento_selecionado = st.sidebar.selectbox("Empreendimento", ["Todos"] + list(empreendimentos))
 
-# Filtro de imobiliária ordenado por vendas totais
-vendas_por_imobiliaria = reservas_df[reservas_df['situacao'] == 'Vendida'].groupby('imobiliaria')['idreserva'].count().reset_index()
-vendas_por_imobiliaria.columns = ['imobiliaria', 'total_vendas']
-vendas_por_imobiliaria = vendas_por_imobiliaria.sort_values('total_vendas', ascending=False)
-
-# Obter lista ordenada de imobiliárias por vendas
-imobiliarias = vendas_por_imobiliaria['imobiliaria'].tolist()
-
-# Adicionar imobiliárias sem vendas no período ao final da lista
-todas_imobiliarias = set(reservas_df['imobiliaria'].unique())
-imobiliarias.extend([i for i in todas_imobiliarias if i not in imobiliarias])
-
-# Preparar lista de opções com destaque para Prati e mostrar contagem de vendas
-options = ["Todas"] + imobiliarias
-formatted_options = [
-    f"💠 {opt} ({vendas_por_imobiliaria[vendas_por_imobiliaria['imobiliaria'] == opt]['total_vendas'].iloc[0] if opt in vendas_por_imobiliaria['imobiliaria'].values else 0})"
-    if opt != "Todas" else opt for opt in options
-]
-formatted_options = [
-    f"💠 {opt}" if "PRATI EMPREENDIMENTOS" in str(opt).upper() else opt 
-    for opt in formatted_options
-]
-option_to_display = dict(zip(options, formatted_options))
-imobiliaria_selecionada = st.sidebar.selectbox(
-    "Imobiliária", 
-    options,
-    format_func=lambda x: option_to_display[x]
-)
-
 # Filtro de situação
 situacoes = sorted(reservas_df[~reservas_df['situacao'].isin(['Vendida', 'Distrato', 'Cancelada'])]['situacao'].unique())
 situacao_selecionada = st.sidebar.selectbox("Situação", ["Todas"] + list(situacoes))
 
 # Aplicar filtros
 mask = (reservas_df['data_cad'].dt.date >= data_inicio) & (reservas_df['data_cad'].dt.date <= data_fim)
-df_filtrado = reservas_df[mask].copy()
-
 if empreendimento_selecionado != "Todos":
-    df_filtrado = df_filtrado[df_filtrado['empreendimento'] == empreendimento_selecionado]
-if imobiliaria_selecionada != "Todas":
-    df_filtrado = df_filtrado[df_filtrado['imobiliaria'] == imobiliaria_selecionada]
+    mask = mask & (reservas_df['empreendimento'] == empreendimento_selecionado)
 if situacao_selecionada != "Todas":
-    df_filtrado = df_filtrado[df_filtrado['situacao'] == situacao_selecionada]
+    mask = mask & (reservas_df['situacao'] == situacao_selecionada)
 
-# Remover reservas canceladas e vendidas
-df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]
-
-df_sem_canceladas_vendidas['tempo_excedido'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
+df_filtrado = reservas_df[mask]
 
 # Métricas principais
-col1, col2, col3 = st.columns(3)
-with col1:
-    total_fora_prazo = df_sem_canceladas_vendidas['fora_do_prazo'].sum()
-    st.metric(label="Total Fora do Prazo", value=int(total_fora_prazo))
-with col2:
-    percentual_fora_prazo = (total_fora_prazo / len(df_sem_canceladas_vendidas)) * 100
-    st.metric(label="Percentual Fora do Prazo", value=f"{percentual_fora_prazo:.1f}%")
-with col3:
-    valor_total_fora_prazo = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']]['valor_contrato'].sum()
-    st.metric(label="Valor Total Fora do Prazo", value=format_currency(valor_total_fora_prazo))
+df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]
 
-# Análise por situação
-st.subheader("Análise por Situação")
+col1, col2 = st.columns(2)
+with col1:
+    st.metric(label="Total De Reservas", value=len(df_sem_canceladas_vendidas))
+with col2:
+    valor_total = df_sem_canceladas_vendidas['valor_contrato'].sum()
+    st.metric(label="Valor Total", value=format_currency(valor_total))
+    
+    
+# Reservas por Situação
+st.subheader("Reservas Por Situação")
 
 # Definir ordem do funil de vendas
 ordem_situacoes = [
@@ -239,161 +252,190 @@ ordem_situacoes = [
     'Distrato'
 ]
 
-# Calcular tempo médio para todas as reservas por situação
-tempo_medio = df_sem_canceladas_vendidas.groupby('situacao')['dias_na_situacao'].mean().round(0).astype(int)
-
-# Análise das reservas fora do prazo
-analise_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']].groupby('situacao').agg({
-    'idreserva': 'count',
-    'valor_contrato': 'sum'
-}).reset_index()
-
-# Adicionar tempo médio à análise
-analise_situacao = analise_situacao.merge(
-    tempo_medio.reset_index().rename(columns={'dias_na_situacao': 'Tempo Médio'}),
-    on='situacao'
-)
-
-analise_situacao.columns = ['Situação', 'Quantidade', 'Valor Total', 'Tempo Médio']
+# Contar reservas por situação do df_filtrado
+quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada'])]['situacao'].value_counts().reset_index()
+quantidade_por_situacao.columns = ['Situação', 'Quantidade']
 
 # Criar mapeamento para ordem
 ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
-analise_situacao['ordem'] = analise_situacao['Situação'].map(ordem_mapping)
-analise_situacao = analise_situacao.sort_values('ordem').drop('ordem', axis=1)
+quantidade_por_situacao['ordem'] = quantidade_por_situacao['Situação'].map(ordem_mapping)
+quantidade_por_situacao = quantidade_por_situacao.sort_values('ordem').drop('ordem', axis=1)
 
-# Formatar valor total
-analise_situacao['Valor Total'] = analise_situacao['Valor Total'].apply(format_currency)
+# Verificar fora do prazo diretamente na tabela de reservas
+df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]
+df_sem_canceladas_vendidas['tempo_excedido'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
+df_sem_canceladas_vendidas['dias_na_situacao'] = (datetime.now() - df_sem_canceladas_vendidas['data_ultima_alteracao_situacao']).dt.days
 
-st.table(analise_situacao)
+# Calcular tempo médio por situação
+tempo_medio = df_sem_canceladas_vendidas.groupby('situacao')['dias_na_situacao'].mean().round(0).astype(int).reset_index()
+tempo_medio.columns = ['Situação', 'Tempo Médio']
 
-st.divider()
+# Contar fora do prazo por situação
+fora_prazo_por_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('situacao')['tempo_excedido'].count().reset_index()
+fora_prazo_por_situacao.columns = ['Situação', 'Fora do Prazo']
 
-# Análise por empreendimento
-st.subheader("Análise por Empreendimento")
+# Juntar as informações
+reservas_por_situacao = pd.merge(quantidade_por_situacao, fora_prazo_por_situacao, on='Situação', how='left')
+reservas_por_situacao = pd.merge(reservas_por_situacao, tempo_medio, on='Situação', how='left')
+reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao['Fora do Prazo'].fillna(0).astype(int)
+reservas_por_situacao['Tempo Médio'] = reservas_por_situacao['Tempo Médio'].fillna(0).astype(int)
 
-# Calcular tempo médio para todas as reservas por empreendimento
-tempo_medio_emp = df_sem_canceladas_vendidas.groupby('empreendimento')['dias_na_situacao'].mean().round(0).astype(int)
-
-# Análise das reservas fora do prazo por empreendimento
-analise_empreendimento = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']].groupby('empreendimento').agg({
-    'idreserva': 'count',
-    'valor_contrato': 'sum'
-}).reset_index()
-
-# Adicionar tempo médio à análise
-analise_empreendimento = analise_empreendimento.merge(
-    tempo_medio_emp.reset_index().rename(columns={'dias_na_situacao': 'Tempo Médio'}),
-    on='empreendimento'
+# Garantir que "Fora do Prazo" não seja maior que "Quantidade"
+reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
+    lambda row: min(row['Fora do Prazo'], row['Quantidade']), 
+    axis=1
 )
 
-analise_empreendimento.columns = ['Empreendimento', 'Quantidade', 'Valor Total', 'Tempo Médio']
-analise_empreendimento['Valor Total'] = analise_empreendimento['Valor Total'].apply(format_currency)
+# Calcular "Dentro do Prazo"
+reservas_por_situacao['Dentro do Prazo'] = reservas_por_situacao['Quantidade'] - reservas_por_situacao['Fora do Prazo']
 
-st.table(analise_empreendimento)
 
-@st.cache_data
-def get_reservation_messages(idreserva):
-    """Busca as mensagens de uma reserva específica"""
-    url = f"https://prati.cvcrm.com.br/api/v2/cv/reservas/{idreserva}/mensagens"
-    headers = {
-        "accept": "application/json",
-        "email": "djonathan.souza@grupoprati.com",
-        "token": "394f594bc6192c86d94f329355ae13ca0b78a2a9",
-    }
-    
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        messages = response.json().get("dados", [])
-        return messages
-    except Exception as e:
-        st.error(f"Erro ao buscar mensagens da reserva {idreserva}: {str(e)}")
-        return []
+# Reordenar as colunas mantendo os nomes originais exatos
+reservas_por_situacao = reservas_por_situacao[['Situação', 'Quantidade', 'Fora do Prazo', 'Tempo Médio', 'Dentro do Prazo']]
+
+# Adicionar linha de totais
+totais = pd.DataFrame([{
+    'Situação': 'Total',
+    'Quantidade': reservas_por_situacao['Quantidade'].sum(),
+    'Fora do Prazo': reservas_por_situacao['Fora do Prazo'].sum(),
+    'Tempo Médio': round(reservas_por_situacao['Tempo Médio'].mean()),
+    'Dentro do Prazo': reservas_por_situacao['Dentro do Prazo'].sum()
+}])
+
+reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=True)
+
+st.table(reservas_por_situacao)
 
 st.divider()
 
-# Lista detalhada de reservas fora do prazo em formato de cards
-st.subheader("Cards de Reservas Fora do Prazo")
-df_fora_prazo = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['fora_do_prazo']]
+# Reservas por Empreendimento
+st.subheader("Reservas Por Empreendimento")
 
-# Criar colunas para os cards (3 cards por linha)
-for i in range(0, len(df_fora_prazo), 3):
-    cols = st.columns([1, 1, 1])  # Equal width columns
-    for j in range(3):
-        if i + j < len(df_fora_prazo):
-            row = df_fora_prazo.iloc[i + j]
-            messages = get_reservation_messages(int(row['idreserva']))
-            
-            with cols[j]:
-                st.markdown(f"""
-                    <div style="
-                        padding: 1.2rem;
-                        border-radius: 10px;
-                        border: 1px solid #e5e7eb;
-                        margin: 0.5rem 0;
-                        background-color: white;
-                        color: black;
-                        height: 100%;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-                    ">
-                        <h4 style="color: #000000; margin-top: 0; margin-bottom: 1rem; font-weight: 600;">Reserva #{int(row['idreserva'])}</h4>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Cliente:</strong> {row['cliente']}</p>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Empreendimento:</strong> {row['empreendimento']}</p>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Situação:</strong> {row['situacao']}</p>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Dias na Situação:</strong> {row['dias_na_situacao']}</p>
-                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Valor:</strong> {format_currency(row['valor_contrato'])}</p>                        <p style="color: #000000; margin: 0.5rem 0;"><strong style="color: #000000; font-weight: 600;">Imobiliária:</strong> {row['imobiliaria']}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                if messages:
-                    with st.expander("Ver Mensagens"):
-                        for msg in messages:
-                            # Try each user ID field in order
-                            user_id = None
-                            
-                            # Check idusuario first
-                            if msg.get('idusuario') is not None:
-                                user_id = str(msg.get('idusuario'))
-                            # Then check idusuarioImobiliaria
-                            elif msg.get('idusuarioImobiliaria') is not None:
-                                user_id = str(msg.get('idusuarioImobiliaria'))
-                            # Then check idcorretor
-                            elif msg.get('idcorretor') is not None:
-                                user_id = str(msg.get('idcorretor'))
-                            # Finally check idusuarioCorrespondente
-                            elif msg.get('idusuarioCorrespondente') is not None:
-                                user_id = str(msg.get('idusuarioCorrespondente'))
-                            
-                            # If we found a user ID, try to map it, otherwise use default name
-                            if user_id and user_id in USER_ID_TO_NAME:
-                                user_name = USER_ID_TO_NAME[user_id]
-                            else:
-                                user_name = msg.get('usuario_nome', 'N/A')
-                              # Formatar a data
-                            data_mensagem = msg.get('dataCad', 'N/A')
-                            if data_mensagem != 'N/A':
-                                try:
-                                    # Converter a string para datetime e depois formatar
-                                    data_formatada = datetime.strptime(data_mensagem, '%Y-%m-%d %H:%M:%S').strftime('%d/%m/%Y')
-                                except:
-                                    data_formatada = data_mensagem
-                            else:
-                                data_formatada = data_mensagem
+# Contar reservas por empreendimento
+quantidade_por_empreendimento = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]['empreendimento'].value_counts().reset_index()
+quantidade_por_empreendimento.columns = ['Empreendimento', 'Quantidade']
 
-                            st.markdown(f"""
-                                <div style="
-                                    padding: 0.8rem;
-                                    border-radius: 8px;
-                                    border: 1px solid #e5e7eb;
-                                    margin: 0.5rem 0;
-                                    background-color: #f9fafb;
-                                    color: #000000;
-                                ">
-                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Data:</strong> <span style="color: #000000;">{data_formatada}</span></p>
-                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Usuário:</strong> <span style="color: #000000;">{user_name}</span></p>
-                                    <p style="color: #000000; margin: 0.2rem 0;"><strong style="color: #000000;">Mensagem:</strong> <span style="color: #000000;">{msg.get('mensagem', 'N/A')}</span></p>
-                                </div>
-                            """, unsafe_allow_html=True)
-                else:
-                    with st.expander("Ver Mensagens"):
-                        st.info("Não há mensagens para esta reserva.")
+# Contar fora do prazo por empreendimento
+fora_prazo_por_empreendimento = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('empreendimento')['tempo_excedido'].count().reset_index()
+fora_prazo_por_empreendimento.columns = ['Empreendimento', 'Fora do Prazo']
+
+# Calcular tempo médio por empreendimento
+tempo_medio_empreendimento = df_sem_canceladas_vendidas.groupby('empreendimento')['dias_na_situacao'].mean().round(0).astype(int).reset_index()
+tempo_medio_empreendimento.columns = ['Empreendimento', 'Tempo Médio']
+
+# Juntar as informações
+reservas_por_empreendimento = pd.merge(quantidade_por_empreendimento, fora_prazo_por_empreendimento, on='Empreendimento', how='left')
+reservas_por_empreendimento = pd.merge(reservas_por_empreendimento, tempo_medio_empreendimento, on='Empreendimento', how='left')
+reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento['Fora do Prazo'].fillna(0).astype(int)
+reservas_por_empreendimento['Tempo Médio'] = reservas_por_empreendimento['Tempo Médio'].fillna(0).astype(int)
+
+# Garantir que "Fora do Prazo" não seja maior que "Quantidade"
+reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento.apply(
+    lambda row: min(row['Fora do Prazo'], row['Quantidade']), 
+    axis=1
+)
+
+# Calcular "Dentro do Prazo"
+reservas_por_empreendimento['Dentro do Prazo'] = reservas_por_empreendimento['Quantidade'] - reservas_por_empreendimento['Fora do Prazo']
+
+# Reordenar as colunas mantendo os nomes originais exatos
+reservas_por_empreendimento = reservas_por_empreendimento[['Empreendimento', 'Quantidade', 'Fora do Prazo', 'Tempo Médio', 'Dentro do Prazo']]
+
+# Adicionar linha de totais
+totais_empreendimento = pd.DataFrame([{
+    'Empreendimento': 'Total',
+    'Quantidade': reservas_por_empreendimento['Quantidade'].sum(),
+    'Fora do Prazo': reservas_por_empreendimento['Fora do Prazo'].sum(),
+    'Tempo Médio': round(reservas_por_empreendimento['Tempo Médio'].mean()),
+    'Dentro do Prazo': reservas_por_empreendimento['Dentro do Prazo'].sum()
+}])
+
+reservas_por_empreendimento = pd.concat([reservas_por_empreendimento, totais_empreendimento], ignore_index=True)
+
+st.table(reservas_por_empreendimento)
+
+st.divider()
+
+# Tabela detalhada
+st.subheader("Lista De Reservas")
+
+# Calcular o tempo na situação atual
+df_sem_canceladas_vendidas['tempo_na_situacao'] = (datetime.now() - pd.to_datetime(df_sem_canceladas_vendidas['data_ultima_alteracao_situacao'])).dt.days
+
+# Verificar quais reservas estão fora do prazo
+df_sem_canceladas_vendidas['fora_do_prazo'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
+
+# Função para estilizar o DataFrame
+def highlight_fora_prazo(s):
+    return ['color: red' if df_sem_canceladas_vendidas['fora_do_prazo'].iloc[i] else '' for i in range(len(s))]
+
+# Preparar e exibir o DataFrame com estilo
+colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao', 
+                'tempo_na_situacao', 'valor_contrato', 'imobiliaria']
+
+# Formatar o valor do contrato antes de exibir
+df_exibir = df_sem_canceladas_vendidas[colunas_exibir].copy()
+df_exibir['valor_contrato'] = df_exibir['valor_contrato'].apply(format_currency)
+
+# Renomear as colunas para title case
+df_exibir.columns = ['Id Reserva', 'Cliente', 'Empreendimento', 'Situação', 
+                   'Tempo Na Situação', 'Valor Contrato', 'Imobiliária']
+
+st.dataframe(
+    df_exibir.style.apply(highlight_fora_prazo, axis=0),
+    use_container_width=True
+)
+
+st.divider()
+
+# Análise de workflow
+st.subheader("Análise De Workflow")
+
+# Definir ordem do funil de vendas
+ordem_situacoes = [
+    'Reserva (7)',
+    'Crédito (CEF) (3)',
+    'Negociação (5)',
+    'Mútuo',
+    'Análise Diretoria',
+    'Contrato - Elaboração',
+    'Contrato - Assinatura',
+    'Vendida',
+    'Distrato'
+]
+
+# Criar DataFrame com a ordem correta
+workflow_agregado = df_filtrado.groupby('situacao')['idreserva'].count().reset_index()
+workflow_agregado.columns = ['situacao', 'quantidade']
+
+# Criar mapeamento para ordem
+ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
+workflow_agregado['ordem'] = workflow_agregado['situacao'].map(ordem_mapping)
+
+# Remover situações que não estão no mapeamento ou têm quantidade zero
+workflow_agregado = workflow_agregado.dropna(subset=['ordem'])  # Remove situações que não estão no mapeamento
+workflow_agregado = workflow_agregado[workflow_agregado['quantidade'] > 0]  # Remove situações com quantidade zero
+workflow_agregado = workflow_agregado.sort_values('ordem').drop('ordem', axis=1)
+
+# Criar gráfico com plotly express
+import plotly.express as px
+
+fig = px.bar(workflow_agregado, 
+             x='situacao', 
+             y='quantidade',
+             text='quantidade',
+             labels={'situacao': 'Situação', 'quantidade': 'Quantidade'},
+             title='Análise do Funil de Vendas')
+
+fig.update_layout(
+    xaxis_title="Situação",
+    yaxis_title="Quantidade",
+    showlegend=False
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# Exibir tabela com os dados
+st.write("Detalhamento por Situação:")
+workflow_agregado.columns = ['Situação', 'Quantidade']
+st.table(workflow_agregado)
