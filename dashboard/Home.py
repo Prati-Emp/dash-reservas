@@ -297,236 +297,214 @@ df_filtrado = reservas_df[mask]
 # Métricas principais
 df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida', 'Distrato'])]
 
-# --- INÍCIO DO BLOCO DE CÓDIGO CORRIGIDO ---
-# A partir daqui, o código foi modificado para incluir a verificação de DataFrame vazio.
-# Esta seção começa aproximadamente na linha 250 do seu arquivo original.
-
-if df_sem_canceladas_vendidas.empty:
-    st.warning("Não há reservas ativas para os filtros selecionados.")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="Total De Reservas", value=0)
-    with col2:
-        st.metric(label="Valor Total", value=format_currency(0))
+col1, col2 = st.columns(2)
+with col1:
+    st.metric(label="Total De Reservas", value=len(df_sem_canceladas_vendidas))
+with col2:
+    valor_total = df_sem_canceladas_vendidas['valor_contrato'].sum()
+    st.metric(label="Valor Total", value=format_currency(valor_total))
     
-    st.subheader("Reservas Por Situação")
-    st.info("Nenhum dado para exibir.")
-    st.subheader("Reservas Por Empreendimento")
-    st.info("Nenhum dado para exibir.")
-    st.subheader("Lista De Reservas")
-    st.info("Nenhum dado para exibir.")
-    st.subheader("Análise De Workflow")
-    st.info("Nenhum dado para exibir.")
-    st.stop() # Parar a execução do script se não houver dados
-else:
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="Total De Reservas", value=len(df_sem_canceladas_vendidas))
-    with col2:
-        valor_total = df_sem_canceladas_vendidas['valor_contrato'].sum()
-        st.metric(label="Valor Total", value=format_currency(valor_total))
-        
-        
-    # Reservas por Situação
-    st.subheader("Reservas Por Situação")
+    
+# Reservas por Situação
+st.subheader("Reservas Por Situação")
 
-    # Definir ordem do funil de vendas
-    ordem_situacoes = [
-        'Reserva (7)',
-        'Crédito (CEF) (3)',
-        'Negociação (5)',
-        'Mútuo',
-        'Análise Diretoria',
-        'Contrato - Elaboração',
-        'Contrato - Assinatura',
-        #'Vendida',
-        # 'Distrato'
-    ]
+# Definir ordem do funil de vendas
+ordem_situacoes = [
+    'Reserva (7)',
+    'Crédito (CEF) (3)',
+    'Negociação (5)',
+    'Mútuo',
+    'Análise Diretoria',
+    'Contrato - Elaboração',
+    'Contrato - Assinatura',
+    #'Vendida',
+    # 'Distrato'
+]
 
-    # Contar reservas por situação do df_filtrado
-    quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Distrato', 'Vendida'])]['situacao'].value_counts().reset_index()
-    quantidade_por_situacao.columns = ['Situação', 'Quantidade']
+# Contar reservas por situação do df_filtrado
+quantidade_por_situacao = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Distrato', 'Vendida'])]['situacao'].value_counts().reset_index()
+quantidade_por_situacao.columns = ['Situação', 'Quantidade']
 
-    # Criar mapeamento para ordem
-    ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
-    quantidade_por_situacao['ordem'] = quantidade_por_situacao['Situação'].map(ordem_mapping)
-    quantidade_por_situacao = quantidade_por_situacao.sort_values('ordem').drop('ordem', axis=1)
+# Criar mapeamento para ordem
+ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
+quantidade_por_situacao['ordem'] = quantidade_por_situacao['Situação'].map(ordem_mapping)
+quantidade_por_situacao = quantidade_por_situacao.sort_values('ordem').drop('ordem', axis=1)
 
-    # Verificar fora do prazo diretamente na tabela de reservas
-    # df_sem_canceladas_vendidas já foi definido acima e verificado se está vazio
-    df_sem_canceladas_vendidas['tempo_excedido'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
-    df_sem_canceladas_vendidas['dias_na_situacao'] = (datetime.now() - df_sem_canceladas_vendidas['data_ultima_alteracao_situacao']).dt.days
+# Verificar fora do prazo diretamente na tabela de reservas
+df_sem_canceladas_vendidas = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]
+df_sem_canceladas_vendidas['tempo_excedido'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
+df_sem_canceladas_vendidas['dias_na_situacao'] = (datetime.now() - df_sem_canceladas_vendidas['data_ultima_alteracao_situacao']).dt.days
 
-    # Calcular tempo médio por situação
-    tempo_medio = df_sem_canceladas_vendidas.groupby('situacao')['dias_na_situacao'].mean().round(0).astype(int).reset_index()
-    tempo_medio.columns = ['Situação', 'Tempo Médio']
+# Calcular tempo médio por situação
+tempo_medio = df_sem_canceladas_vendidas.groupby('situacao')['dias_na_situacao'].mean().round(0).astype(int).reset_index()
+tempo_medio.columns = ['Situação', 'Tempo Médio']
 
-    # Contar fora do prazo por situação
-    fora_prazo_por_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('situacao')['tempo_excedido'].count().reset_index()
-    fora_prazo_por_situacao.columns = ['Situação', 'Fora do Prazo']
+# Contar fora do prazo por situação
+fora_prazo_por_situacao = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('situacao')['tempo_excedido'].count().reset_index()
+fora_prazo_por_situacao.columns = ['Situação', 'Fora do Prazo']
 
-    # Juntar as informações
-    reservas_por_situacao = pd.merge(quantidade_por_situacao, fora_prazo_por_situacao, on='Situação', how='left')
-    reservas_por_situacao = pd.merge(reservas_por_situacao, tempo_medio, on='Situação', how='left')
-    reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao['Fora do Prazo'].fillna(0).astype(int)
-    reservas_por_situacao['Tempo Médio'] = reservas_por_situacao['Tempo Médio'].fillna(0).astype(int)
+# Juntar as informações
+reservas_por_situacao = pd.merge(quantidade_por_situacao, fora_prazo_por_situacao, on='Situação', how='left')
+reservas_por_situacao = pd.merge(reservas_por_situacao, tempo_medio, on='Situação', how='left')
+reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao['Fora do Prazo'].fillna(0).astype(int)
+reservas_por_situacao['Tempo Médio'] = reservas_por_situacao['Tempo Médio'].fillna(0).astype(int)
 
-    # Garantir que "Fora do Prazo" não seja maior que "Quantidade"
-    reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
-        lambda row: min(row['Fora do Prazo'], row['Quantidade']), 
-        axis=1
-    )
+# Garantir que "Fora do Prazo" não seja maior que "Quantidade"
+reservas_por_situacao['Fora do Prazo'] = reservas_por_situacao.apply(
+    lambda row: min(row['Fora do Prazo'], row['Quantidade']), 
+    axis=1
+)
 
-    # Calcular "Dentro do Prazo"
-    reservas_por_situacao['Dentro do Prazo'] = reservas_por_situacao['Quantidade'] - reservas_por_situacao['Fora do Prazo']
+# Calcular "Dentro do Prazo"
+reservas_por_situacao['Dentro do Prazo'] = reservas_por_situacao['Quantidade'] - reservas_por_situacao['Fora do Prazo']
 
 
-    # Reordenar as colunas mantendo os nomes originais exatos
-    reservas_por_situacao = reservas_por_situacao[['Situação', 'Quantidade', 'Fora do Prazo', 'Tempo Médio', 'Dentro do Prazo']]
+# Reordenar as colunas mantendo os nomes originais exatos
+reservas_por_situacao = reservas_por_situacao[['Situação', 'Quantidade', 'Fora do Prazo', 'Tempo Médio', 'Dentro do Prazo']]
 
-    # Adicionar linha de totais
-    totais = pd.DataFrame([{
-        'Situação': 'Total',
-        'Quantidade': reservas_por_situacao['Quantidade'].sum(),
-        'Fora do Prazo': reservas_por_situacao['Fora do Prazo'].sum(),
-        'Tempo Médio': round(reservas_por_situacao['Tempo Médio'].mean()),
-        'Dentro do Prazo': reservas_por_situacao['Dentro do Prazo'].sum()
-    }])
+# Adicionar linha de totais
+totais = pd.DataFrame([{
+    'Situação': 'Total',
+    'Quantidade': reservas_por_situacao['Quantidade'].sum(),
+    'Fora do Prazo': reservas_por_situacao['Fora do Prazo'].sum(),
+    'Tempo Médio': round(reservas_por_situacao['Tempo Médio'].mean()),
+    'Dentro do Prazo': reservas_por_situacao['Dentro do Prazo'].sum()
+}])
 
-    reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=True)
+reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=True)
 
-    st.table(reservas_por_situacao)
+st.table(reservas_por_situacao)
 
-    st.divider()
+st.divider()
 
-    # Reservas por Empreendimento
-    st.subheader("Reservas Por Empreendimento")
+# Reservas por Empreendimento
+st.subheader("Reservas Por Empreendimento")
 
-    # Contar reservas por empreendimento
-    quantidade_por_empreendimento = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]['empreendimento'].value_counts().reset_index()
-    quantidade_por_empreendimento.columns = ['Empreendimento', 'Quantidade']
+# Contar reservas por empreendimento
+quantidade_por_empreendimento = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Vendida'])]['empreendimento'].value_counts().reset_index()
+quantidade_por_empreendimento.columns = ['Empreendimento', 'Quantidade']
 
-    # Contar fora do prazo por empreendimento
-    fora_prazo_por_empreendimento = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('empreendimento')['tempo_excedido'].count().reset_index()
-    fora_prazo_por_empreendimento.columns = ['Empreendimento', 'Fora do Prazo']
+# Contar fora do prazo por empreendimento
+fora_prazo_por_empreendimento = df_sem_canceladas_vendidas[df_sem_canceladas_vendidas['tempo_excedido']].groupby('empreendimento')['tempo_excedido'].count().reset_index()
+fora_prazo_por_empreendimento.columns = ['Empreendimento', 'Fora do Prazo']
 
-    # Calcular tempo médio por empreendimento
-    tempo_medio_empreendimento = df_sem_canceladas_vendidas.groupby('empreendimento')['dias_na_situacao'].mean().round(0).astype(int).reset_index()
-    tempo_medio_empreendimento.columns = ['Empreendimento', 'Tempo Médio']
+# Calcular tempo médio por empreendimento
+tempo_medio_empreendimento = df_sem_canceladas_vendidas.groupby('empreendimento')['dias_na_situacao'].mean().round(0).astype(int).reset_index()
+tempo_medio_empreendimento.columns = ['Empreendimento', 'Tempo Médio']
 
-    # Juntar as informações
-    reservas_por_empreendimento = pd.merge(quantidade_por_empreendimento, fora_prazo_por_empreendimento, on='Empreendimento', how='left')
-    reservas_por_empreendimento = pd.merge(reservas_por_empreendimento, tempo_medio_empreendimento, on='Empreendimento', how='left')
-    reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento['Fora do Prazo'].fillna(0).astype(int)
-    reservas_por_empreendimento['Tempo Médio'] = reservas_por_empreendimento['Tempo Médio'].fillna(0).astype(int)
+# Juntar as informações
+reservas_por_empreendimento = pd.merge(quantidade_por_empreendimento, fora_prazo_por_empreendimento, on='Empreendimento', how='left')
+reservas_por_empreendimento = pd.merge(reservas_por_empreendimento, tempo_medio_empreendimento, on='Empreendimento', how='left')
+reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento['Fora do Prazo'].fillna(0).astype(int)
+reservas_por_empreendimento['Tempo Médio'] = reservas_por_empreendimento['Tempo Médio'].fillna(0).astype(int)
 
-    # Garantir que "Fora do Prazo" não seja maior que "Quantidade"
-    reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento.apply(
-        lambda row: min(row['Fora_do_Prazo'], row['Quantidade']), 
-        axis=1
-    )
+# Garantir que "Fora do Prazo" não seja maior que "Quantidade"
+reservas_por_empreendimento['Fora do Prazo'] = reservas_por_empreendimento.apply(
+    lambda row: min(row['Fora do Prazo'], row['Quantidade']), 
+    axis=1
+)
 
-    # Calcular "Dentro do Prazo"
-    reservas_por_empreendimento['Dentro do Prazo'] = reservas_por_empreendimento['Quantidade'] - reservas_por_empreendimento['Fora do Prazo']
+# Calcular "Dentro do Prazo"
+reservas_por_empreendimento['Dentro do Prazo'] = reservas_por_empreendimento['Quantidade'] - reservas_por_empreendimento['Fora do Prazo']
 
-    # Reordenar as colunas mantendo os nomes originais exatos
-    reservas_por_empreendimento = reservas_por_empreendimento[['Empreendimento', 'Quantidade', 'Fora do Prazo', 'Tempo Médio', 'Dentro do Prazo']]
+# Reordenar as colunas mantendo os nomes originais exatos
+reservas_por_empreendimento = reservas_por_empreendimento[['Empreendimento', 'Quantidade', 'Fora do Prazo', 'Tempo Médio', 'Dentro do Prazo']]
 
-    # Adicionar linha de totais
-    totais_empreendimento = pd.DataFrame([{
-        'Empreendimento': 'Total',
-        'Quantidade': reservas_por_empreendimento['Quantidade'].sum(),
-        'Fora do Prazo': reservas_por_empreendimento['Fora do Prazo'].sum(),
-        'Tempo Médio': round(reservas_por_empreendimento['Tempo Médio'].mean()),
-        'Dentro do Prazo': reservas_por_empreendimento['Dentro do Prazo'].sum()
-    }])
+# Adicionar linha de totais
+totais_empreendimento = pd.DataFrame([{
+    'Empreendimento': 'Total',
+    'Quantidade': reservas_por_empreendimento['Quantidade'].sum(),
+    'Fora do Prazo': reservas_por_empreendimento['Fora do Prazo'].sum(),
+    'Tempo Médio': round(reservas_por_empreendimento['Tempo Médio'].mean()),
+    'Dentro do Prazo': reservas_por_empreendimento['Dentro do Prazo'].sum()
+}])
 
-    reservas_por_empreendimento = pd.concat([reservas_por_empreendimento, totais_empreendimento], ignore_index=True)
+reservas_por_empreendimento = pd.concat([reservas_por_empreendimento, totais_empreendimento], ignore_index=True)
 
-    st.table(reservas_por_empreendimento)
+st.table(reservas_por_empreendimento)
 
-    st.divider()
+st.divider()
 
-    # Tabela detalhada
-    st.subheader("Lista De Reservas")
+# Tabela detalhada
+st.subheader("Lista De Reservas")
 
-    # Calcular o tempo na situação atual
-    df_sem_canceladas_vendidas['tempo_na_situacao'] = (datetime.now() - pd.to_datetime(df_sem_canceladas_vendidas['data_ultima_alteracao_situacao'])).dt.days
+# Calcular o tempo na situação atual
+df_sem_canceladas_vendidas['tempo_na_situacao'] = (datetime.now() - pd.to_datetime(df_sem_canceladas_vendidas['data_ultima_alteracao_situacao'])).dt.days
 
-    # Verificar quais reservas estão fora do prazo
-    df_sem_canceladas_vendidas['fora_do_prazo'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
+# Verificar quais reservas estão fora do prazo
+df_sem_canceladas_vendidas['fora_do_prazo'] = df_sem_canceladas_vendidas.apply(check_time_limit, axis=1)
 
-    # Função para estilizar o DataFrame
-    def highlight_fora_prazo(s):
-        return ['color: red' if df_sem_canceladas_vendidas['fora_do_prazo'].iloc[i] else '' for i in range(len(s))]
+# Função para estilizar o DataFrame
+def highlight_fora_prazo(s):
+    return ['color: red' if df_sem_canceladas_vendidas['fora_do_prazo'].iloc[i] else '' for i in range(len(s))]
 
-    # Preparar e exibir o DataFrame com estilo
-    colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao', 
-                    'tempo_na_situacao', 'valor_contrato', 'imobiliaria']
+# Preparar e exibir o DataFrame com estilo
+colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao', 
+                'tempo_na_situacao', 'valor_contrato', 'imobiliaria']
 
-    # Formatar o valor do contrato antes de exibir
-    df_exibir = df_sem_canceladas_vendidas[colunas_exibir].copy()
-    df_exibir['valor_contrato'] = df_exibir['valor_contrato'].apply(format_currency)
+# Formatar o valor do contrato antes de exibir
+df_exibir = df_sem_canceladas_vendidas[colunas_exibir].copy()
+df_exibir['valor_contrato'] = df_exibir['valor_contrato'].apply(format_currency)
 
-    # Renomear as colunas para title case
-    df_exibir.columns = ['Id Reserva', 'Cliente', 'Empreendimento', 'Situação', 
-                       'Tempo Na Situação', 'Valor Contrato', 'Imobiliária']
+# Renomear as colunas para title case
+df_exibir.columns = ['Id Reserva', 'Cliente', 'Empreendimento', 'Situação', 
+                   'Tempo Na Situação', 'Valor Contrato', 'Imobiliária']
 
-    st.dataframe(
-        df_exibir.style.apply(highlight_fora_prazo, axis=0),
-        use_container_width=True
-    )
+st.dataframe(
+    df_exibir.style.apply(highlight_fora_prazo, axis=0),
+    use_container_width=True
+)
 
-    st.divider()
+st.divider()
 
-    # Análise de workflow
-    st.subheader("Análise De Workflow")
+# Análise de workflow
+st.subheader("Análise De Workflow")
 
-    # Definir ordem do funil de vendas
-    ordem_situacoes = [
-        'Reserva (7)',
-        'Crédito (CEF) (3)',
-        'Negociação (5)',
-        'Mútuo',
-        'Análise Diretoria',
-        'Contrato - Elaboração',
-        'Contrato - Assinatura',
-    # 'Vendida',
-        # 'Distrato'
-    ]
+# Definir ordem do funil de vendas
+ordem_situacoes = [
+    'Reserva (7)',
+    'Crédito (CEF) (3)',
+    'Negociação (5)',
+    'Mútuo',
+    'Análise Diretoria',
+    'Contrato - Elaboração',
+    'Contrato - Assinatura',
+   # 'Vendida',
+    # 'Distrato'
+]
 
-    # Criar DataFrame com a ordem correta
-    workflow_agregado = df_filtrado.groupby('situacao')['idreserva'].count().reset_index()
-    workflow_agregado.columns = ['situacao', 'quantidade']
+# Criar DataFrame com a ordem correta
+workflow_agregado = df_filtrado.groupby('situacao')['idreserva'].count().reset_index()
+workflow_agregado.columns = ['situacao', 'quantidade']
 
-    # Criar mapeamento para ordem
-    ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
-    workflow_agregado['ordem'] = workflow_agregado['situacao'].map(ordem_mapping)
+# Criar mapeamento para ordem
+ordem_mapping = {situacao: idx for idx, situacao in enumerate(ordem_situacoes)}
+workflow_agregado['ordem'] = workflow_agregado['situacao'].map(ordem_mapping)
 
-    # Remover situações que não estão no mapeamento ou têm quantidade zero
-    workflow_agregado = workflow_agregado.dropna(subset=['ordem'])  # Remove situações que não estão no mapeamento
-    workflow_agregado = workflow_agregado[workflow_agregado['quantidade'] > 0]  # Remove situações com quantidade zero
-    workflow_agregado = workflow_agregado.sort_values('ordem').drop('ordem', axis=1)
+# Remover situações que não estão no mapeamento ou têm quantidade zero
+workflow_agregado = workflow_agregado.dropna(subset=['ordem'])  # Remove situações que não estão no mapeamento
+workflow_agregado = workflow_agregado[workflow_agregado['quantidade'] > 0]  # Remove situações com quantidade zero
+workflow_agregado = workflow_agregado.sort_values('ordem').drop('ordem', axis=1)
 
-    # Criar gráfico com plotly express
-    import plotly.express as px
+# Criar gráfico com plotly express
+import plotly.express as px
 
-    fig = px.bar(workflow_agregado, 
-                x='situacao', 
-                y='quantidade',
-                text='quantidade',
-                labels={'situacao': 'Situação', 'quantidade': 'Quantidade'},
-                title='Análise do Funil de Vendas')
+fig = px.bar(workflow_agregado, 
+             x='situacao', 
+             y='quantidade',
+             text='quantidade',
+             labels={'situacao': 'Situação', 'quantidade': 'Quantidade'},
+             title='Análise do Funil de Vendas')
 
-    fig.update_layout(
-        xaxis_title="Situação",
-        yaxis_title="Quantidade",
-        showlegend=False
-    )
+fig.update_layout(
+    xaxis_title="Situação",
+    yaxis_title="Quantidade",
+    showlegend=False
+)
 
-    st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
-    # Exibir tabela com os dados
-    st.write("Detalhamento por Situação:")
-    workflow_agregado.columns = ['Situação', 'Quantidade']
-    st.table(workflow_agregado)
+# Exibir tabela com os dados
+st.write("Detalhamento por Situação:")
+workflow_agregado.columns = ['Situação', 'Quantidade']
+st.table(workflow_agregado)
