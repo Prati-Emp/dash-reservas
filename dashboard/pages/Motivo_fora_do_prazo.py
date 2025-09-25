@@ -29,6 +29,7 @@ USER_ID_TO_NAME = {
     "142": "EDUARDA VITORIA COUTINHO GALLO - Duda (Gestor)",
     "135": "Lavínia Gabrielly Fetsch - Lavínia (Gestor)",
     "407": "VINICIUS HENRIQUE CZERNIEJ (Corretor)",
+    "408": "Tarcisio Henrique Cadamuro Costa (Corretor)",
 }
 
 import sys
