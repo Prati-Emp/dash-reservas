@@ -66,28 +66,67 @@ filtered_df = leads_df[
 if selected_empreendimento != "Todos":
     filtered_df = filtered_df[filtered_df['empreendimento_ultimo'] == selected_empreendimento]
 
-# Mapeamento do funil
+# Transições do funil baseadas na tabela "de" -> "para"
+transicoes_funil = {
+    ("aguardando atendimento", "qualificação"): "Leads",
+    ("qualificação", "descoberta"): "Leads",
+    ("descoberta", "em atendimento"): "Em atendimento",
+    ("em atendimento", "atendimento futuro"): "Em atendimento",
+    ("atendimento futuro", "visita agendada"): "Em atendimento",
+    ("visita agendada", "visita realizada"): "Visita realizada",
+    ("visita realizada", "atendimento pos visita"): "Visita realizada",
+    ("atendimento pos visita", "pre cadastro pos visita"): "Com reserva",
+    ("com reserva", "venda realizada"): "Venda realizada",
+    ("venda realizada", "venda realizada"): "Venda realizada"
+}
+
+# Mapeamento do funil para fallback (situação atual ou anterior para "descartado")
 mapa_funil = {
     "aguardando atendimento": "Leads",
     "qualificação": "Leads",
+    "descoberta": "Leads",
     "em atendimento": "Em atendimento",
     "atendimento futuro": "Em atendimento",
     "visita agendada": "Em atendimento",
     "visita realizada": "Visita realizada",
     "atendimento pos visita": "Visita realizada",
     "pre cadastro": "Com reserva",
+    "pre cadastro pos visita": "Com reserva",
     "com reserva": "Com reserva",
     "venda realizada": "Venda realizada",
     "descartado": "Leads"
 }
 
-def map_situacao(situacao_nome):
-    if pd.isna(situacao_nome):
+def get_funil_etapa(prev_situacao, curr_situacao):
+    # Normalizar entradas
+    if pd.isna(prev_situacao):
+        prev_key = None
+    else:
+        prev_key = str(prev_situacao).strip().lower()
+    
+    if pd.isna(curr_situacao):
+        curr_key = None
+    else:
+        curr_key = str(curr_situacao).strip().lower()
+    
+    # Caso especial: "descartado" usa a etapa da situação anterior
+    if curr_key == "descartado":
+        if prev_key is None:
+            return "Leads"
+        return mapa_funil.get(prev_key, "Leads")
+    
+    # Verificar transição (prev, curr)
+    if prev_key is not None and curr_key is not None:
+        trans_key = (prev_key, curr_key)
+        if trans_key in transicoes_funil:
+            return transicoes_funil[trans_key]
+    
+    # Fallback: usar mapa da situação atual
+    if curr_key is None:
         return "Leads"
-    key = str(situacao_nome).strip().lower()
-    return mapa_funil.get(key, "Leads")
+    return mapa_funil.get(curr_key, "Leads")
 
-filtered_df["funil_etapa"] = filtered_df["situacao_nome"].apply(map_situacao)
+filtered_df["funil_etapa"] = filtered_df.apply(lambda row: get_funil_etapa(row['nome_situacao_anterior_lead'], row['situacao_nome']), axis=1)
 
 funil_etapas = [
     "Leads",
@@ -116,7 +155,7 @@ col5.metric("Venda realizada", etapa_counts[4])
 
 st.markdown("---")
 st.subheader("Leads detalhados")
-display_columns = ["idlead", "situacao_nome", "funil_etapa", "gestor", "imobiliaria", "empreendimento_ultimo", "data_cad"]
+display_columns = ["idlead", "situacao_nome", "nome_situacao_anterior_lead", "funil_etapa", "gestor", "imobiliaria", "empreendimento_ultimo", "data_cad"]
 st.dataframe(
     filtered_df[display_columns].sort_values("data_cad", ascending=False),
     use_container_width=True
