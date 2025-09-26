@@ -14,7 +14,7 @@ st.session_state['current_page'] = __file__
 
 st.set_page_config(page_title="Leads - Funil de Vendas", page_icon="📊", layout="wide")
 
-st.title("📊 Funil de Leads - Prati Empreendimentos")
+st.title("📊 Funil de Leads")
 
 MOTHERDUCK_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXRpcHJvamV0b3NAZ21haWwuY29tIiwic2Vzc2lvbiI6InByYXRpcHJvamV0b3MuZ21haWwuY29tIiwicGF0IjoiUnA1clVla2JwRFY4OFp2d3RKNWxkOFhxdmtpSFQzRlNacWdXbXFsQ09WMCIsInVzZXJJZCI6ImFkZThmZGM0LTc1MDktNGU4Ny1hZTcwLTMwZGVkMTQ4Y2RlOSIsImlzcyI6Im1kX3BhdCIsInJlYWRPbmx5IjpmYWxzZSwidG9rZW5UeXBlIjoicmVhZF93cml0ZSIsImlhdCI6MTc0OTA2ODI4N30.TEUsvAxCKXhzNrb7WAok0jL2YmqEEtrxaEOKZZ6tuBI"
 
@@ -22,9 +22,15 @@ MOTHERDUCK_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXRpcHJ
 def get_all_leads_duckdb():
     con = duckdb.connect(f"md:reservas?token={MOTHERDUCK_TOKEN}")
     query = """
-    SELECT Idlead as idlead, Data_cad as data_cad, Situacao as situacao_nome, Imobiliaria as imobiliaria, nome_situacao_anterior_lead, gestor, empreendimento_ultimo
+    SELECT Idlead as idlead,
+           Data_cad as data_cad,
+           Referencia_data as referencia_data,
+           Situacao as situacao_nome,
+           Imobiliaria as imobiliaria,
+           nome_situacao_anterior_lead,
+           gestor,
+           empreendimento_ultimo
     FROM cv_leads
-    WHERE Data_cad >= '2022-04-13'
     ORDER BY data_cad DESC
     """
     df = con.execute(query).df()
@@ -41,46 +47,34 @@ if leads_df.empty:
     st.warning("Nenhum dado retornado do Mother Duck.")
     st.stop()
 
-# Initial filter by imobiliaria
-leads_df = leads_df[
-    (leads_df["imobiliaria"] == "Prati Empreendimentos")
-]
-
 # Sidebar for filters
 st.sidebar.header("Filtros")
 
-# Date filters stacked vertically
+# Date filters stacked vertically (using data_cad)
 data_inicio = st.sidebar.date_input("Data Inicial", value=datetime(2022, 4, 13).date())
 data_fim = st.sidebar.date_input("Data Final", value=datetime.now().date())
+
+# Imobiliaria filter
+imobiliarias = sorted(leads_df['imobiliaria'].dropna().unique())
+selected_imobiliaria = st.sidebar.selectbox("Imobiliária", ["Todas"] + list(imobiliarias))
 
 # Empreendimento filter
 empreendimentos = sorted(leads_df['empreendimento_ultimo'].dropna().unique())
 selected_empreendimento = st.sidebar.selectbox("Empreendimento de Interesse", ["Todos"] + list(empreendimentos))
 
-# Apply filters
+# Apply filters using data_cad
 filtered_df = leads_df[
     (leads_df['data_cad'].dt.date >= data_inicio) &
     (leads_df['data_cad'].dt.date <= data_fim)
 ].copy()
 
+if selected_imobiliaria != "Todas":
+    filtered_df = filtered_df[filtered_df['imobiliaria'] == selected_imobiliaria]
+
 if selected_empreendimento != "Todos":
     filtered_df = filtered_df[filtered_df['empreendimento_ultimo'] == selected_empreendimento]
 
-# Transições do funil baseadas na tabela "de" -> "para"
-transicoes_funil = {
-    ("aguardando atendimento", "qualificação"): "Leads",
-    ("qualificação", "descoberta"): "Leads",
-    ("descoberta", "em atendimento"): "Em atendimento",
-    ("em atendimento", "atendimento futuro"): "Em atendimento",
-    ("atendimento futuro", "visita agendada"): "Em atendimento",
-    ("visita agendada", "visita realizada"): "Visita realizada",
-    ("visita realizada", "atendimento pos visita"): "Visita realizada",
-    ("atendimento pos visita", "pre cadastro pos visita"): "Com reserva",
-    ("com reserva", "venda realizada"): "Venda realizada",
-    ("venda realizada", "venda realizada"): "Venda realizada"
-}
-
-# Mapeamento do funil para fallback (situação atual ou anterior para "descartado")
+# Mapeamento do funil baseado na tabela "de" (situação atual) -> "para" (etapa), com especial para "descartado" usando anterior
 mapa_funil = {
     "aguardando atendimento": "Leads",
     "qualificação": "Leads",
@@ -90,38 +84,29 @@ mapa_funil = {
     "visita agendada": "Em atendimento",
     "visita realizada": "Visita realizada",
     "atendimento pos visita": "Visita realizada",
+    "atendimento pós visita": "Visita realizada",
     "pre cadastro": "Com reserva",
     "pre cadastro pos visita": "Com reserva",
+    "em pré-cadastro": "Com reserva",
     "com reserva": "Com reserva",
-    "venda realizada": "Venda realizada",
-    "descartado": "Leads"
+    "venda realizada": "Venda realizada"
 }
 
 def get_funil_etapa(prev_situacao, curr_situacao):
     # Normalizar entradas
-    if pd.isna(prev_situacao):
-        prev_key = None
-    else:
-        prev_key = str(prev_situacao).strip().lower()
-    
     if pd.isna(curr_situacao):
         curr_key = None
     else:
         curr_key = str(curr_situacao).strip().lower()
     
-    # Caso especial: "descartado" usa a etapa da situação anterior
+    # Caso especial: "descartado" sempre usa etapa da situação anterior
     if curr_key == "descartado":
-        if prev_key is None:
+        if pd.isna(prev_situacao):
             return "Leads"
+        prev_key = str(prev_situacao).strip().lower()
         return mapa_funil.get(prev_key, "Leads")
     
-    # Verificar transição (prev, curr)
-    if prev_key is not None and curr_key is not None:
-        trans_key = (prev_key, curr_key)
-        if trans_key in transicoes_funil:
-            return transicoes_funil[trans_key]
-    
-    # Fallback: usar mapa da situação atual
+    # Para outras situações, usa mapeamento da atual
     if curr_key is None:
         return "Leads"
     return mapa_funil.get(curr_key, "Leads")
