@@ -3,6 +3,7 @@ import duckdb
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
+import os
 
 from utils import display_navigation
 
@@ -16,7 +17,10 @@ st.set_page_config(page_title="Leads Ativos - Funil de Vendas", page_icon="📊"
 
 st.title("📊 Funil de Leads Ativos")
 
-MOTHERDUCK_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXRpcHJvamV0b3NAZ21haWwuY29tIiwic2Vzc2lvbiI6InByYXRpcHJvamV0b3MuZ21haWwuY29tIiwicGF0IjoiUnA1clVla2JwRFY4OFp2d3RKNWxkOFhxdmtpSFQzRlNacWdXbXFsQ09WMCIsInVzZXJJZCI6ImFkZThmZGM0LTc1MDktNGU4Ny1hZTcwLTMwZGVkMTQ4Y2RlOSIsImlzcyI6Im1kX3BhdCIsInJlYWRPbmx5IjpmYWxzZSwidG9rZW5UeXBlIjoicmVhZF93cml0ZSIsImlhdCI6MTc0OTA2ODI4N30.TEUsvAxCKXhzNrb7WAok0jL2YmqEEtrxaEOKZZ6tuBI"
+MOTHERDUCK_TOKEN = st.secrets.get("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN", ""))
+if not MOTHERDUCK_TOKEN:
+    st.error("Token do MotherDuck não configurado. Defina MOTHERDUCK_TOKEN em st.secrets ou variável de ambiente.")
+    st.stop()
 
 # Load all data with broad date range for filtering
 def get_all_leads_duckdb():
