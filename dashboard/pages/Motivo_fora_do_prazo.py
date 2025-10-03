@@ -299,13 +299,18 @@ def get_reservation_messages(idreserva):
     """Busca as mensagens de uma reserva específica"""
     url = f"https://prati.cvcrm.com.br/api/v2/cv/reservas/{idreserva}/mensagens"
     
-    # TESTE TEMPORÁRIO - Credenciais hardcoded para validação
-    email = "odair.santos@grupoprati.com"
-    token = "a90cdab7923ba776dce58b539d6622db77ccb36f"
+    # Obter credenciais de forma segura
+    try:
+        email = st.secrets["CVCRM_EMAIL"]
+        token = st.secrets["CVCRM_TOKEN"]
+    except KeyError:
+        # Fallback para variáveis de ambiente em desenvolvimento
+        email = os.getenv('CVCRM_EMAIL', '')
+        token = os.getenv('CVCRM_TOKEN', '')
     
-    # Debug temporário para verificar secrets
-    st.write("🔍 TESTE: Usando credenciais hardcoded temporariamente")
-    st.write("Debug - Secrets disponíveis:", list(st.secrets.keys()) if hasattr(st, 'secrets') else "st.secrets não disponível")
+    if not email or not token:
+        st.error("Credenciais CVCRM não configuradas. Verifique as configurações de secrets CVCRM_EMAIL e CVCRM_TOKEN.")
+        return []
     
     headers = {
         "accept": "application/json",
