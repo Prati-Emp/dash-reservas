@@ -300,11 +300,11 @@ def get_reservation_messages(idreserva):
     url = f"https://prati.cvcrm.com.br/api/v2/cv/reservas/{idreserva}/mensagens"
     
     # Obter credenciais de forma segura
-    email = os.getenv('CVCRM_EMAIL')
-    token = os.getenv('CVCRM_TOKEN')
+    email = st.secrets.get("CVCRM_EMAIL", os.getenv('CVCRM_EMAIL', ''))
+    token = st.secrets.get("CVCRM_TOKEN", os.getenv('CVCRM_TOKEN', ''))
     
     if not email or not token:
-        st.error("Credenciais CVCRM não configuradas. Verifique as variáveis de ambiente CVCRM_EMAIL e CVCRM_TOKEN.")
+        st.error("Credenciais CVCRM não configuradas. Verifique as configurações de secrets CVCRM_EMAIL e CVCRM_TOKEN.")
         return []
     
     headers = {
