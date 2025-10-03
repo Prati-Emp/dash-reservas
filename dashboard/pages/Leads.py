@@ -16,6 +16,17 @@ st.set_page_config(page_title="Leads - Funil de Vendas", page_icon="📊", layou
 
 st.title("📊 Funil de Leads")
 
+# Remove previous single tooltip near title
+# Add tooltips next to each metric label
+
+# col1, col2, col3, col4, col5 = st.columns(5)
+
+# col1.metric(f"Leads {tooltip_icon(tooltip_texts['Leads'])}", etapa_counts[0], unsafe_allow_html=True)
+# col2.metric(f"Em atendimento {tooltip_icon(tooltip_texts['Em atendimento'])}", etapa_counts[1], unsafe_allow_html=True)
+# col3.metric(f"Visita Realizada {tooltip_icon(tooltip_texts['Visita Realizada'])}", etapa_counts[2], unsafe_allow_html=True)
+# col4.metric(f"Com reserva {tooltip_icon(tooltip_texts['Com reserva'])}", etapa_counts[3], unsafe_allow_html=True)
+# col5.metric(f"Venda realizada {tooltip_icon(tooltip_texts['Venda realizada'])}", etapa_counts[4], unsafe_allow_html=True)
+
 MOTHERDUCK_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXRpcHJvamV0b3NAZ21haWwuY29tIiwic2Vzc2lvbiI6InByYXRpcHJvamV0b3MuZ21haWwuY29tIiwicGF0IjoiUnA1clVla2JwRFY4OFp2d3RKNWxkOFhxdmtpSFQzRlNacWdXbXFsQ09WMCIsInVzZXJJZCI6ImFkZThmZGM0LTc1MDktNGU4Ny1hZTcwLTMwZGVkMTQ4Y2RlOSIsImlzcyI6Im1kX3BhdCIsInJlYWRPbmx5IjpmYWxzZSwidG9rZW5UeXBlIjoicmVhZF93cml0ZSIsImlhdCI6MTc0OTA2ODI4N30.TEUsvAxCKXhzNrb7WAok0jL2YmqEEtrxaEOKZZ6tuBI"
 
 # Load all data with broad date range for filtering
@@ -121,7 +132,34 @@ funil_etapas = [
     "Venda realizada"
 ]
 
-etapa_counts = [filtered_df[filtered_df["funil_etapa"] == etapa].shape[0] for etapa in funil_etapas]
+# Calcular as contagens iniciais para cada etapa
+initial_etapa_counts = {etapa: filtered_df[filtered_df["funil_etapa"] == etapa].shape[0] for etapa in funil_etapas}
+
+etapa_counts = []
+total_leads_remaining = filtered_df.shape[0]
+
+for i, etapa in enumerate(funil_etapas):
+    current_stage_count = initial_etapa_counts.get(etapa, 0)
+    
+    if i == 0: # Leads totais
+        etapa_counts.append(total_leads_remaining)
+    elif etapa == "Em atendimento":
+        cumulative_em_atendimento = initial_etapa_counts.get("Em atendimento", 0) + \
+                                    initial_etapa_counts.get("Visita realizada", 0) + \
+                                    initial_etapa_counts.get("Com reserva", 0) + \
+                                    initial_etapa_counts.get("Venda realizada", 0)
+        etapa_counts.append(cumulative_em_atendimento)
+    elif etapa == "Visita realizada":
+        cumulative_visita_realizada = initial_etapa_counts.get("Visita realizada", 0) + \
+                                      initial_etapa_counts.get("Com reserva", 0) + \
+                                      initial_etapa_counts.get("Venda realizada", 0)
+        etapa_counts.append(cumulative_visita_realizada)
+    elif etapa == "Com reserva":
+        cumulative_com_reserva = initial_etapa_counts.get("Com reserva", 0) + \
+                                 initial_etapa_counts.get("Venda realizada", 0)
+        etapa_counts.append(cumulative_com_reserva)
+    else:
+        etapa_counts.append(current_stage_count)
 
 fig = go.Figure(go.Funnel(
     y=funil_etapas,
@@ -132,11 +170,22 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
 col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("Leads", etapa_counts[0])
-col2.metric("Em atendimento", etapa_counts[1])
-col3.metric("Visita Realizada", etapa_counts[2])
-col4.metric("Com reserva", etapa_counts[3])
-col5.metric("Venda realizada", etapa_counts[4])
+
+tooltip_texts = {
+    "Leads": "Total de leads em todas as situações.",
+    "Em atendimento": "Leads nas situações relacionadas a atendimento.",
+    "Visita Realizada": "Leads que realizaram visita.",
+    "Com reserva": "Leads com reserva confirmada.",
+    "Venda realizada": "Leads que resultaram em venda."
+}
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+col1.metric(label="Leads", value=etapa_counts[0], help=tooltip_texts['Leads'])
+col2.metric(label="Em atendimento", value=etapa_counts[1], help=tooltip_texts['Em atendimento'])
+col3.metric(label="Visita Realizada", value=etapa_counts[2], help=tooltip_texts['Visita Realizada'])
+col4.metric(label="Com reserva", value=etapa_counts[3], help=tooltip_texts['Com reserva'])
+col5.metric(label="Venda realizada", value=etapa_counts[4], help=tooltip_texts['Venda realizada'])
 
 st.markdown("---")
 st.subheader("Leads detalhados")

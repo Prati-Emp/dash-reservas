@@ -1,5 +1,5 @@
-- [x] Reverter mudanças no download_leads_csv.py: manter Data_cad como parâmetro
-- [x] Atualizar dashboard/pages/Leads.py para usar Data_cad ao invés de referencia_data para filtros e exibição
-- [x] Remover filtro Data_cad >= '2022-04-13' na query do dashboard para incluir todos os leads
-- [x] Remover filtro inicial por imobiliaria Prati e adicionar filtro opcional por imobiliaria no sidebar
-- [x] Testar as mudanças: verificar imobiliarias únicas, contagem de vendas por imobiliaria, lógica de filtros
+# TODO: Atualizar Funil de Leads
+
+- [x] Calcular a contagem de leads em outras situações (não mapeadas no funil)
+- [x] Adicionar essa contagem à contagem de "Leads" no funil
+- [x] Verificar se o gráfico e métricas refletem as mudanças corretamente

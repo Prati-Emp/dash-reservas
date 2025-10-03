@@ -119,6 +119,13 @@ funil_etapas = [
 
 etapa_counts = [filtered_df[filtered_df["funil_etapa"] == etapa].shape[0] for etapa in funil_etapas]
 
+# Calcular tempo ativo (dias desde a data de cadastro até hoje)
+filtered_df["data_cad"] = pd.to_datetime(filtered_df["data_cad"], errors="coerce")
+now_ts = pd.Timestamp.now()
+filtered_df["dias_ativo"] = (now_ts - filtered_df["data_cad"]).dt.days
+# Formatar como "X dias" para exibição
+filtered_df["tempo_ativo"] = filtered_df["dias_ativo"].apply(lambda d: f"{int(d)} dias" if pd.notna(d) else "-")
+
 fig = go.Figure(go.Funnel(
     y=funil_etapas,
     x=etapa_counts,
@@ -127,15 +134,27 @@ fig = go.Figure(go.Funnel(
 st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Leads", etapa_counts[0])
-col2.metric("Em atendimento", etapa_counts[1])
-col3.metric("Visita Realizada", etapa_counts[2])
-col4.metric("Com reserva", etapa_counts[3])
+# Cartão de total de leads ativos (todas as situações consideradas ativas)
+total_ativos = int(filtered_df.shape[0])
+col_total, col1, col2, col3, col4 = st.columns(5)
+
+tooltip_texts = {
+    "Total de leads ativos": "Soma de todas as situações ativas (exclui descartados, em pré-cadastro e venda realizada).",
+    "Leads": "Total de leads na etapa inicial (excluindo descartados, em pré-cadastro e venda realizada).",
+    "Em atendimento": "Leads nas situações relacionadas a atendimento (excluindo descartados, em pré-cadastro e venda realizada).",
+    "Visita Realizada": "Leads que realizaram visita (excluindo descartados, em pré-cadastro e venda realizada).",
+    "Com reserva": "Leads com reserva confirmada (excluindo descartados, em pré-cadastro e venda realizada)."
+}
+
+col_total.metric(label="Total de leads ativos", value=total_ativos, help=tooltip_texts['Total de leads ativos'])
+col1.metric(label="Leads", value=etapa_counts[0], help=tooltip_texts['Leads'])
+col2.metric(label="Em atendimento", value=etapa_counts[1], help=tooltip_texts['Em atendimento'])
+col3.metric(label="Visita Realizada", value=etapa_counts[2], help=tooltip_texts['Visita Realizada'])
+col4.metric(label="Com reserva", value=etapa_counts[3], help=tooltip_texts['Com reserva'])
 
 st.markdown("---")
 st.subheader("Leads ativos detalhados")
-display_columns = ["idlead", "situacao_nome", "nome_situacao_anterior_lead", "funil_etapa", "gestor", "imobiliaria", "empreendimento_ultimo", "data_cad"]
+display_columns = ["idlead", "situacao_nome", "nome_situacao_anterior_lead", "funil_etapa", "gestor", "imobiliaria", "empreendimento_ultimo", "data_cad", "tempo_ativo"]
 st.dataframe(
     filtered_df[display_columns].sort_values("data_cad", ascending=False),
     use_container_width=True
