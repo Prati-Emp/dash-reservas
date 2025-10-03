@@ -17,9 +17,8 @@ try:
         "token": os.environ.get('CVCRM_TOKEN', '').strip(),
     }
 
-    print("DEBUG - Credenciais (após strip):")
-    print(f"Email: {headers['email']}")
-    print(f"Token: {headers['token']}")
+    # Debug removido por questões de segurança
+    print("Credenciais configuradas com sucesso")
 except Exception as e:
     print(f"Erro ao configurar credenciais: {str(e)}")
     print(f"Variáveis de ambiente disponíveis: {list(os.environ.keys())}")

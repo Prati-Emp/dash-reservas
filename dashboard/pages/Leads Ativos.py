@@ -19,7 +19,7 @@ st.title("📊 Funil de Leads Ativos")
 
 MOTHERDUCK_TOKEN = st.secrets.get("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN", ""))
 if not MOTHERDUCK_TOKEN:
-    st.error("Token do MotherDuck não configurado. Defina MOTHERDUCK_TOKEN em st.secrets ou variável de ambiente.")
+    st.error("Token do MotherDuck não configurado. Verifique as configurações de secrets.")
     st.stop()
 
 # Load all data with broad date range for filtering

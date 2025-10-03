@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 def get_motherduck_connection():
     """Create a connection to MotherDuck"""
     token = os.environ.get('MOTHERDUCK_TOKEN', '').strip()
-    print("\nDebug - Verificando token do MotherDuck:")
-    print(f"Token encontrado: {'Sim' if token else 'Não'}")
+    # Debug removido por questões de segurança
+    print("Verificando configuração do MotherDuck...")
     
     if not token:
         print("Variáveis de ambiente disponíveis:", list(os.environ.keys()))

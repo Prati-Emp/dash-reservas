@@ -298,10 +298,19 @@ st.table(analise_empreendimento)
 def get_reservation_messages(idreserva):
     """Busca as mensagens de uma reserva específica"""
     url = f"https://prati.cvcrm.com.br/api/v2/cv/reservas/{idreserva}/mensagens"
+    
+    # Obter credenciais de forma segura
+    email = os.getenv('CVCRM_EMAIL')
+    token = os.getenv('CVCRM_TOKEN')
+    
+    if not email or not token:
+        st.error("Credenciais CVCRM não configuradas. Verifique as variáveis de ambiente CVCRM_EMAIL e CVCRM_TOKEN.")
+        return []
+    
     headers = {
         "accept": "application/json",
-        "email": "djonathan.souza@grupoprati.com",
-        "token": "394f594bc6192c86d94f329355ae13ca0b78a2a9",
+        "email": email.strip(),
+        "token": token.strip(),
     }
     
     try:

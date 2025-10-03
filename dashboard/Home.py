@@ -77,45 +77,12 @@ def format_currency(value):
 #     </style>
 #     """, unsafe_allow_html=True)
 
-# # Função para verificar senha
-# def check_password():
-#     """Returns `True` if the user had the correct password."""
-    
-#     if "password_correct" not in st.session_state:
-#         # First run, hide sidebar and show password input
-#         hide_sidebar()
-        
-#         col1, col2, col3 = st.columns([1, 1, 1])
-#         with col2:
-#             # Logo centralizada usando arquivo local
-#             st.image(get_logo_path(), width=400)
-#             st.markdown("<br>", unsafe_allow_html=True)
-            
-#             # Campo de senha com label menor e centralizado
-#             st.markdown('<p class="small-font">Por favor, digite a senha para acessar o dashboard:</p>', unsafe_allow_html=True)
-#             password = st.text_input(
-#                 "",
-#                 type="password",
-#                 key="password",
-#                 label_visibility="collapsed"
-#             )
-            
-#             # Botão de entrar
-#             if st.button("Entrar"):
-#                 if password == "prati2025":
-#                     st.session_state["password_correct"] = True
-#                     st.rerun()
-#                 else:
-#                     st.error("😕 Senha incorreta")
-#         return False
-    
-#     return st.session_state.get("password_correct", False)
-
-# # Verifica a senha antes de mostrar qualquer conteúdo
-# if not check_password():
-#     st.stop()  # Não mostra nada além deste ponto se a senha estiver errada
-
-# # Se chegou aqui, a senha está correta
+# Sistema de autenticação removido por questões de segurança
+# Para implementar autenticação segura, use:
+# - Azure Active Directory
+# - AWS Cognito  
+# - Auth0
+# - ou outro provedor de identidade confiável
 # Título do aplicativo
 st.title("📊 Relatório De Reservas")
 
