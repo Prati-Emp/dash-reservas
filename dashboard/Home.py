@@ -109,17 +109,41 @@ def check_time_limit(row):
     # Verifica se o tempo desde a última alteração excede o limite
     return dias_decorridos >= dias_limite
 
+def normalize_situacao(situacao_val):
+    """Normalize raw situação values to canonical funnel stages used in ordem_situacoes."""
+    s = str(situacao_val or '')
+    if 'Análise' in s and ('Diretoria' in s or 'proposta' in s):
+        return 'Análise Diretoria'
+    if 'Assinatura' in s or 'Assinado' in s:
+        return 'Contrato - Assinatura'
+    if 'Elaboração' in s:
+        return 'Contrato - Elaboração'
+    if 'Crédito' in s or 'CEF' in s:
+        return 'Crédito (CEF) (3)'
+    if 'Reserva' in s:
+        return 'Reserva (7)'
+    if 'Negociação' in s:
+        return 'Negociação (5)'
+    if 'Mútuo' in s or 'Mutuo' in s:
+        return 'Mútuo'
+    return s
+
 # MotherDuck connection
 @st.cache_resource
 def get_motherduck_connection():
     """Create a cached connection to MotherDuck"""
     try:        
         token = os.getenv('MOTHERDUCK_TOKEN')
+        # Tenta buscar do secrets se não estiver no ambiente
+        if not token:
+            try:
+                token = st.secrets["MOTHERDUCK_TOKEN"]
+            except Exception:
+                token = None
         
         if not token:
             load_dotenv(override=True)
             token = os.getenv('MOTHERDUCK_TOKEN')
-            st.write("Token após reload do .env:", "Sim" if token else "Não")
             
             if not token:
                 raise ValueError("MOTHERDUCK_TOKEN não encontrado nas variáveis de ambiente")
@@ -342,6 +366,63 @@ reservas_por_situacao = pd.concat([reservas_por_situacao, totais], ignore_index=
 
 st.table(reservas_por_situacao)
 
+# Funil de Reservas (quantidade, % fora do prazo, valor parado)
+st.subheader("Funil De Reservas")
+
+# Base para o funil: mesmas regras da matriz
+df_funnel_base = df_filtrado[~df_filtrado['situacao'].isin(['Cancelada', 'Distrato', 'Vendida'])].copy()
+df_funnel_base['situacao_norm'] = df_funnel_base['situacao'].apply(normalize_situacao)
+df_funnel_base['tempo_excedido'] = df_funnel_base.apply(check_time_limit, axis=1)
+
+# Agregações
+funnel_qtd = df_funnel_base.groupby('situacao_norm').size().reset_index(name='Quantidade').rename(columns={'situacao_norm': 'situacao'})
+funnel_valor = df_funnel_base.groupby('situacao_norm')['valor_contrato'].sum().reset_index().rename(columns={'situacao_norm': 'situacao', 'valor_contrato': 'Valor Parado'})
+funnel_fora = df_funnel_base[df_funnel_base['tempo_excedido']].groupby('situacao_norm')['tempo_excedido'].count().reset_index().rename(columns={'situacao_norm': 'situacao', 'tempo_excedido': 'Fora do Prazo'})
+
+# Tabela base com todas as etapas do funil
+etapas_df = pd.DataFrame({'situacao': ordem_situacoes})
+
+# Merge e cálculos garantindo todas as etapas
+funnel_df = etapas_df.merge(funnel_qtd, on='situacao', how='left') \
+                     .merge(funnel_fora, on='situacao', how='left') \
+                     .merge(funnel_valor, on='situacao', how='left')
+funnel_df['Quantidade'] = funnel_df['Quantidade'].fillna(0).astype(int)
+funnel_df['Fora do Prazo'] = funnel_df['Fora do Prazo'].fillna(0).astype(int)
+funnel_df['Valor Parado'] = funnel_df['Valor Parado'].fillna(0)
+funnel_df['% Fora do Prazo'] = (
+    funnel_df.apply(lambda r: 0 if r['Quantidade'] == 0 else round((r['Fora do Prazo'] / r['Quantidade']) * 100), axis=1)
+)
+
+# Rotulos e gráfico
+import plotly.graph_objects as go
+
+funnel_labels = [f"{row['situacao']}" for _, row in funnel_df.iterrows()]
+
+funnel_text = [
+    f"{row['Quantidade']} reservas | {row['% Fora do Prazo']}% fora | {format_currency(row['Valor Parado'])}" 
+    for _, row in funnel_df.iterrows()
+]
+
+fig_funnel = go.Figure(go.Funnel(
+    y=funnel_labels,
+    x=funnel_df['Quantidade'],
+    text=funnel_text,
+    textposition="outside",
+    textfont=dict(size=12, color="#FFFFFF"),
+    connector=dict(line=dict(color="rgba(255,255,255,0.2)", width=1)),
+    hovertemplate=(
+        "<b>%{y}</b><br>Quantidade: %{x}<br>%{text}"
+    )
+))
+
+fig_funnel.update_layout(
+    showlegend=False,
+    margin=dict(l=10, r=10, t=30, b=10),
+    title="Funil por Situação"
+)
+
+st.plotly_chart(fig_funnel, use_container_width=True)
+
 st.divider()
 
 # Reservas por Empreendimento
@@ -409,13 +490,25 @@ def highlight_fora_prazo(s):
 colunas_exibir = ['idreserva', 'cliente', 'empreendimento', 'situacao', 
                 'tempo_na_situacao', 'valor_contrato', 'imobiliaria']
 
-# Formatar o valor do contrato antes de exibir
-df_exibir = df_sem_canceladas_vendidas[colunas_exibir].copy()
-df_exibir['valor_contrato'] = df_exibir['valor_contrato'].apply(format_currency)
+# Selecionar apenas as colunas disponíveis para evitar KeyError
+colunas_disponiveis = [c for c in colunas_exibir if c in df_sem_canceladas_vendidas.columns]
+df_exibir = df_sem_canceladas_vendidas[colunas_disponiveis].copy()
 
-# Renomear as colunas para title case
-df_exibir.columns = ['Id Reserva', 'Cliente', 'Empreendimento', 'Situação', 
-                   'Tempo Na Situação', 'Valor Contrato', 'Imobiliária']
+# Formatar o valor do contrato antes de exibir (se existir)
+if 'valor_contrato' in df_exibir.columns:
+    df_exibir['valor_contrato'] = df_exibir['valor_contrato'].apply(format_currency)
+
+# Renomear as colunas para títulos amigáveis apenas para as existentes
+rename_map = {
+    'idreserva': 'Id Reserva',
+    'cliente': 'Cliente',
+    'empreendimento': 'Empreendimento',
+    'situacao': 'Situação',
+    'tempo_na_situacao': 'Tempo Na Situação',
+    'valor_contrato': 'Valor Contrato',
+    'imobiliaria': 'Imobiliária'
+}
+df_exibir = df_exibir.rename(columns={k: v for k, v in rename_map.items() if k in df_exibir.columns})
 
 st.dataframe(
     df_exibir.style.apply(highlight_fora_prazo, axis=0),
