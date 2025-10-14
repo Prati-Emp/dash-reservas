@@ -45,7 +45,8 @@ def get_all_leads_duckdb():
            Imobiliaria as imobiliaria,
            nome_situacao_anterior_lead,
            gestor,
-           empreendimento_ultimo
+           empreendimento_ultimo,
+           corretor
     FROM cv_leads
     ORDER BY data_cad DESC
     """
@@ -67,7 +68,7 @@ if leads_df.empty:
 st.sidebar.header("Filtros")
 
 # Date filters stacked vertically (using data_cad)
-data_inicio = st.sidebar.date_input("Data Inicial", value=datetime(2022, 4, 13).date())
+data_inicio = st.sidebar.date_input("Data Inicial", value=datetime(2025, 1, 1).date())
 data_fim = st.sidebar.date_input("Data Final", value=datetime.now().date())
 
 # Imobiliaria filter
@@ -77,6 +78,10 @@ selected_imobiliaria = st.sidebar.selectbox("Imobiliária", ["Todas"] + list(imo
 # Empreendimento filter
 empreendimentos = sorted(leads_df['empreendimento_ultimo'].dropna().unique())
 selected_empreendimento = st.sidebar.selectbox("Empreendimento de Interesse", ["Todos"] + list(empreendimentos))
+
+# Corretor filter
+corretores = sorted(leads_df['corretor'].dropna().unique())
+selected_corretor = st.sidebar.selectbox("Corretor", ["Todos"] + list(corretores))
 
 # Apply filters using data_cad
 filtered_df = leads_df[
@@ -89,6 +94,9 @@ if selected_imobiliaria != "Todas":
 
 if selected_empreendimento != "Todos":
     filtered_df = filtered_df[filtered_df['empreendimento_ultimo'] == selected_empreendimento]
+
+if selected_corretor != "Todos":
+    filtered_df = filtered_df[filtered_df['corretor'] == selected_corretor]
 
 # Mapeamento do funil baseado na tabela "de" (situação atual) -> "para" (etapa), com especial para "descartado" usando anterior
 mapa_funil = {
@@ -194,7 +202,7 @@ col5.metric(label="Venda realizada", value=etapa_counts[4], help=tooltip_texts['
 
 st.markdown("---")
 st.subheader("Leads detalhados")
-display_columns = ["idlead", "situacao_nome", "nome_situacao_anterior_lead", "funil_etapa", "gestor", "imobiliaria", "empreendimento_ultimo", "data_cad"]
+display_columns = ["idlead", "situacao_nome", "nome_situacao_anterior_lead", "funil_etapa", "gestor", "corretor", "imobiliaria", "empreendimento_ultimo", "data_cad"]
 st.dataframe(
     filtered_df[display_columns].sort_values("data_cad", ascending=False),
     use_container_width=True
