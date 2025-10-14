@@ -207,3 +207,33 @@ st.dataframe(
     filtered_df[display_columns].sort_values("data_cad", ascending=False),
     use_container_width=True
 )
+
+# Matriz de conversão de/para
+st.markdown("---")
+st.subheader("📊 Matriz de Conversão de Situações")
+
+# Criar matriz exatamente como no print
+def create_conversion_mapping():
+    mapping_data = [
+        {'De': 'Aguardando atendimento', 'Para': 'Leads'},
+        {'De': 'Qualificação', 'Para': 'Leads'},
+        {'De': 'Descoberta', 'Para': 'Leads'},
+        {'De': 'Em atendimento', 'Para': 'Em atendimento'},
+        {'De': 'Atendimento futuro', 'Para': 'Em atendimento'},
+        {'De': 'Visita agendada', 'Para': 'Em atendimento'},
+        {'De': 'Visita realizada', 'Para': 'Visita realizada'},
+        {'De': 'Atendimento pos visita', 'Para': 'Visita realizada'},
+        {'De': 'Pre cadastro', 'Para': 'Com reserva'},
+        {'De': 'Com reserva', 'Para': 'Com reserva'},
+        {'De': 'Venda realizada', 'Para': 'Venda realizada'}
+    ]
+    
+    return pd.DataFrame(mapping_data)
+
+# Exibir matriz de mapeamento
+conversion_mapping = create_conversion_mapping()
+st.dataframe(
+    conversion_mapping,
+    use_container_width=True,
+    hide_index=True
+)
